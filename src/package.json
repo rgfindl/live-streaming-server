@@ -1,0 +1,14 @@
+{
+  "name": "rtmp-ingest",
+  "version": "1.0.0",
+  "description": "Ingest RTMP and encode to HLS",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "author": "Randy Findley",
+  "license": "ISC",
+  "dependencies": {
+    "express": "^4.17.1"
+  }
+}

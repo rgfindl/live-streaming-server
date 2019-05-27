@@ -1,0 +1,11 @@
+services:
+  livestreaming:
+    build: .
+    ports:
+      - 1935:1935
+      - 8181:80
+      - 8182:3000
+    volumes:
+      - ./mnt:/mnt
+
+version: "2"
