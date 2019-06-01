@@ -1,0 +1,14 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Description: Shared Resources
+
+Resources:
+
+  Bucket:
+    Description: S3 Bucket
+    Type: AWS::S3::Bucket
+
+Outputs:
+  Bucket:
+    Value: !Ref 'Bucket'
+    Export:
+      Name: !Sub '${AWS::StackName}-Bucket'

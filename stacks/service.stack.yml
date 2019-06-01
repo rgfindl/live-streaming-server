@@ -1,0 +1,301 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Description: Service ECS Service, Task, and ALB
+Parameters:
+
+  Environment:
+    Type: String
+    Description: Environment name
+
+  VPCStack:
+    Type: String
+    Description: VPC Stack Name
+
+  ECSStack:
+    Type: String
+    Description: ECS Stack Name
+
+  SharedStack:
+    Type: String
+    Description: Shared Stack Name
+
+  RepositoryUrl:
+    Type: String
+    Description: ECR Repository Url
+
+  DesiredCount:
+    Type: Number
+    Default: '1'
+    Description: Desired task count
+
+  MinSize:
+    Type: Number
+    Default: '1'
+    Description: Minimum number of instances that can be launched
+
+  MaxSize:
+    Type: Number
+    Default: '2'
+    Description: Maximum number of instances that can be launched
+
+  TargetCPUUtilization:
+    Type: String
+    Description: Target CPU Utilization for Tracking Policy on ASG
+    Default: '75'
+
+  Path:
+    Type: String
+    Default: '/*'
+    Description: Service path
+
+  BuildVersion:
+    Type: String
+    Description: Latest build version
+
+  Version:
+    Type: String
+    Default: ''
+    Description: Service version
+
+  ListenerRulePriority:
+    Type: Number
+    Default: 2
+
+Conditions:
+  UseBuildVersion: !Or
+    - !Equals [!Ref Environment, 'dev']
+    - !Equals [!Ref Version, '']
+
+Resources:
+
+  CloudWatchLogsGroup:
+    Type: AWS::Logs::LogGroup
+    Properties:
+      LogGroupName: !Ref AWS::StackName
+      RetentionInDays: 365
+
+  # This IAM Role grants the service access to register/unregister with the
+  # Application Load Balancer (ALB). It is based on the default documented here:
+  # http://docs.aws.amazon.com/AmazonECS/latest/developerguide/service_IAM_role.html
+  ServiceRole:
+    Type: AWS::IAM::Role
+    Properties:
+      RoleName: !Sub ecs-service-${AWS::StackName}
+      Path: /
+      AssumeRolePolicyDocument:
+        Version: 2012-10-17
+        Statement:
+            Effect: Allow
+            Principal:
+              Service:
+                - ecs.amazonaws.com
+            Action: sts:AssumeRole
+      Policies:
+        - PolicyName: !Sub ecs-service-${AWS::StackName}
+          PolicyDocument:
+            Version: 2012-10-17
+            Statement:
+              - Effect: Allow
+                Action:
+                  - '*'
+                Resource:
+                  - '*'
+
+  TaskRole:
+    Type: AWS::IAM::Role
+    Properties:
+      RoleName: !Sub ecs-task-${AWS::StackName}
+      Path: /
+      AssumeRolePolicyDocument:
+        Version: 2012-10-17
+        Statement:
+            Effect: Allow
+            Principal:
+              Service:
+                - ecs-tasks.amazonaws.com
+            Action: sts:AssumeRole
+      Policies:
+        - PolicyName: !Sub ecs-service-${AWS::StackName}
+          PolicyDocument:
+            Version: 2012-10-17
+            Statement:
+              - Effect: Allow
+                Action:
+                  - '*'
+                Resource:
+                  - '*'
+
+  TaskDefinition:
+    Type: AWS::ECS::TaskDefinition
+    Properties:
+      Family: !Ref AWS::StackName
+      TaskRoleArn: !GetAtt TaskRole.Arn
+      ContainerDefinitions:
+        - Name: !Ref AWS::StackName
+          Essential: true
+          Image: !Sub
+            - "${URL}:${Version}"
+            - {
+                URL: !Ref RepositoryUrl,
+                Version: {"Fn::If": ["UseBuildVersion", {"Ref": "BuildVersion"}, { "Ref": "Version" }]}
+              }
+          Memory: 128
+          PortMappings:
+            - ContainerPort: 8000
+          Environment:
+            - Name: AWS_REGION
+              Value: !Ref AWS::Region
+            - Name: ENV
+              Value: !Ref Environment
+            - Name: NODE_ENV
+              Value: !Ref Environment
+            - Name: AWS_ACCOUNT_ID
+              Value: !Ref AWS::AccountId
+            - Name: BUCKET
+              Value:
+                Fn::ImportValue:
+                  !Sub "${SharedStack}-Bucket"
+          LogConfiguration:
+            LogDriver: awslogs
+            Options:
+              awslogs-group: !Ref AWS::StackName
+              awslogs-region: !Ref AWS::Region
+
+  TargetGroup:
+    Type: AWS::ElasticLoadBalancingV2::TargetGroup
+    Properties:
+      VpcId:
+        Fn::ImportValue:
+          !Sub "${VPCStack}-VPCID"
+      Port: 80
+      Protocol: HTTP
+      Matcher:
+        HttpCode: 200-299
+      HealthCheckIntervalSeconds: 30
+      HealthCheckPath: '/healthcheck'
+      HealthCheckProtocol: HTTP
+      HealthCheckTimeoutSeconds: 5
+      HealthyThresholdCount: 2
+      UnhealthyThresholdCount: 10
+
+  ListenerRuleHttp:
+    Type: AWS::ElasticLoadBalancingV2::ListenerRule
+    Properties:
+      ListenerArn:
+        Fn::ImportValue:
+          !Sub "${ECSStack}-LoadBalancerListenerHttp"
+      Priority: !Ref ListenerRulePriority
+      Conditions:
+        - Field: path-pattern
+          Values:
+            - !Ref Path
+      Actions:
+        - TargetGroupArn: !Ref TargetGroup
+          Type: forward
+
+  ListenerRuleHttps:
+    Type: AWS::ElasticLoadBalancingV2::ListenerRule
+    Properties:
+      ListenerArn:
+        Fn::ImportValue:
+          !Sub "${ECSStack}-LoadBalancerListenerHttps"
+      Priority: !Ref ListenerRulePriority
+      Conditions:
+        - Field: path-pattern
+          Values:
+            - !Ref Path
+      Actions:
+        - TargetGroupArn: !Ref TargetGroup
+          Type: forward
+
+  Service:
+    Type: AWS::ECS::Service
+    Properties:
+      Cluster:
+        Fn::ImportValue:
+          !Sub "${ECSStack}-ECSCluster"
+      Role: !Ref ServiceRole
+      DesiredCount: !Ref DesiredCount
+      TaskDefinition: !Ref TaskDefinition
+      DeploymentConfiguration:
+        MinimumHealthyPercent: 50
+      HealthCheckGracePeriodSeconds: 30
+      LoadBalancers:
+        - ContainerName: !Ref AWS::StackName
+          ContainerPort: 8000
+          TargetGroupArn: !Ref TargetGroup
+
+
+  #
+  # Auto scaling
+  #
+
+  ApplicationAutoScalingRole:
+    Type: AWS::IAM::Role
+    Properties:
+      RoleName: !Sub ecs-service-auto-scaling-${AWS::StackName}
+      AssumeRolePolicyDocument:
+        Statement:
+        - Effect: Allow
+          Principal:
+            Service:
+            - application-autoscaling.amazonaws.com
+          Action:
+          - sts:AssumeRole
+      Path: "/"
+      Policies:
+       - PolicyName: autoscale-ecs-service
+         PolicyDocument:
+           Statement:
+           - Effect: Allow
+             Action:
+             - ecs:UpdateService
+             - ecs:DescribeServices
+             - cloudwatch:DescribeAlarms
+             - cloudwatch:GetMetricStatistics
+             - cloudwatch:PutMetricAlarm
+             Resource: "*"
+
+  CPUUtilizationPolicyTarget:
+    Type: AWS::ApplicationAutoScaling::ScalableTarget
+    Properties:
+      MaxCapacity: !Ref MaxSize
+      MinCapacity: !Ref MinSize
+      ResourceId:
+        Fn::Sub:
+          - service/${EcsClusterName}/${Service.Name}
+          - EcsClusterName:
+              Fn::ImportValue:
+                !Sub "${ECSStack}-ECSCluster"
+      RoleARN: !GetAtt ApplicationAutoScalingRole.Arn
+      ScalableDimension: ecs:service:DesiredCount
+      ServiceNamespace: ecs
+
+  CPUUtilizationPolicy:
+    Type: AWS::ApplicationAutoScaling::ScalingPolicy
+    Properties:
+      PolicyType: TargetTrackingScaling
+      PolicyName: !Sub ${AWS::StackName}-cpu-utilization
+      ScalingTargetId: !Ref CPUUtilizationPolicyTarget
+      TargetTrackingScalingPolicyConfiguration:
+        CustomizedMetricSpecification:
+          Dimensions:
+            - Name: ServiceName
+              Value: !Sub ${Service.Name}
+          MetricName: CPUUtilization
+          Namespace: AWS/ECS
+          Statistic: Average
+        TargetValue: !Ref TargetCPUUtilization
+
+Outputs:
+  Service:
+    Value: !Ref 'Service'
+    Export:
+      Name: !Sub '${AWS::StackName}-Service'
+  TaskDefinition:
+    Value: !Ref 'TaskDefinition'
+    Export:
+      Name: !Sub '${AWS::StackName}-TaskDefinition'
+  CloudWatchLogsGroup:
+    Value: !Ref 'CloudWatchLogsGroup'
+    Export:
+      Name: !Sub '${AWS::StackName}-CloudWatchLogsGroup'

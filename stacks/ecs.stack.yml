@@ -1,0 +1,389 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Description: EC2 configuration and ECS Cluster
+Parameters:
+  KeyPairName:
+    Type: AWS::EC2::KeyPair::KeyName
+    Description: Name of an existing EC2 KeyPair to enable SSH access to the ECS instances.
+
+  Environment:
+    Type: String
+    Description: Environment name
+
+  VPCStack:
+    Type: String
+    Description: VPC Stack Name
+
+  DesiredCapacity:
+    Type: Number
+    Default: '1'
+    Description: Number of instances to launch in your ECS cluster.
+
+  MinSize:
+    Type: Number
+    Default: '1'
+    Description: Minimum number of instances that can be launched in your ECS cluster.
+
+  MaxSize:
+    Type: Number
+    Default: '2'
+    Description: Maximum number of instances that can be launched in your ECS cluster.
+
+  TargetCPUReservation:
+    Description: Target CPU reservation % for autoscaling
+    Type: Number
+    Default: '75'
+
+  TargetMemoryReservation:
+    Description: Target Memory reservation % for autoscaling
+    Type: Number
+    Default: '75'
+
+  InstanceType:
+    Description: EC2 instance type
+    Type: String
+    Default: t2.micro
+    AllowedValues: [t2.micro, t2.small, t2.medium, t2.large, m3.medium, m3.large,
+      m3.xlarge, m3.2xlarge, m4.large, m4.xlarge, m4.2xlarge, m4.4xlarge, m4.10xlarge,
+      c4.large, c4.xlarge, c4.2xlarge, c4.4xlarge, c4.8xlarge, c3.large, c3.xlarge,
+      c3.2xlarge, c3.4xlarge, c3.8xlarge, r3.large, r3.xlarge, r3.2xlarge, r3.4xlarge,
+      r3.8xlarge, i2.xlarge, i2.2xlarge, i2.4xlarge, i2.8xlarge]
+    ConstraintDescription: Please choose a valid instance type.
+
+  TLD:
+    Type: String
+    Description: TLD name needed by Route53 to perform DNS (example.com)
+    Default: ''
+
+  Domain:
+    Type: String
+    Description: Domain name for your api (api.example.com)
+    Default: ''
+
+Conditions:
+  UseCustomDomain: !And
+    - !Not [!Equals [!Ref TLD, '']]
+    - !Not [!Equals [!Ref Domain, '']]
+
+Mappings:
+
+  # These are the latest ECS optimized AMIs as of August 2017:
+  #
+  #   amzn-ami-2017.03.f-amazon-ecs-optimized
+  #   ECS agent:    1.14.4
+  #   Docker:       17.03.2-ce
+  #   ecs-init:     1.14.4-1
+  #
+  # You can find the latest available on this page of our documentation:
+  # http://docs.aws.amazon.com/AmazonECS/latest/developerguide/ecs-optimized_AMI.html
+  # (note the AMI identifier is region specific)
+
+  AWSRegionToAMI:
+    us-east-2:
+      AMI: ami-64300001
+    us-east-1:
+      AMI: ami-aff65ad2
+    us-west-2:
+      AMI: ami-40ddb938
+    us-west-1:
+      AMI: ami-69677709
+    eu-west-3:
+      AMI: ami-250eb858
+    eu-west-2:
+      AMI: ami-2218f945
+    eu-west-1:
+      AMI: ami-2d386654
+    eu-central-1:
+      AMI: ami-9fc39c74
+    ap-northeast-2:
+      AMI: ami-9d56f9f3
+    ap-northeast-1:
+      AMI: ami-a99d8ad5
+    ap-southeast-2:
+      AMI: ami-efda148d
+    ap-southeast-1:
+      AMI: ami-846144f8
+    ca-central-1:
+      AMI: ami-897ff9ed
+    ap-south-1:
+      AMI: ami-72edc81d
+    sa-east-1:
+      AMI: ami-4a7e2826
+
+Resources:
+
+  #
+  # Security Groups
+  #
+
+  # This security group defines who/where is allowed to access the Application Load Balancer.
+  # By default, we've opened this up to the public internet (0.0.0.0/0) but can you restrict
+  # it further if you want.
+  LoadBalancerSecurityGroup:
+    Type: AWS::EC2::SecurityGroup
+    Properties:
+      VpcId:
+        Fn::ImportValue:
+          !Sub "${VPCStack}-VPCID"
+      GroupDescription: Access to the load balancer that sits in front of ECS
+      SecurityGroupIngress:
+        # Allow access from anywhere to our ECS services
+        - CidrIp: 0.0.0.0/0
+          IpProtocol: -1
+
+  # This security group defines who/where is allowed to access the ECS hosts directly.
+  # By default we're just allowing access from the load balancer.  If you want to SSH
+  # into the hosts, or expose non-load balanced services you can open their ports here.
+  ECSHostSecurityGroup:
+    Type: AWS::EC2::SecurityGroup
+    Properties:
+      VpcId:
+        Fn::ImportValue:
+          !Sub "${VPCStack}-VPCID"
+      GroupDescription: Access to the ECS hosts and the tasks/containers that run on them
+      SecurityGroupIngress:
+        # Only allow inbound access to ECS from the ELB
+        - SourceSecurityGroupId: !Ref LoadBalancerSecurityGroup
+          IpProtocol: -1
+
+  #
+  # SSL
+  #
+
+  #
+  # SSL Certificate needed by CloudFront.
+  #
+  SSL:
+    Type: AWS::CertificateManager::Certificate
+    Condition: UseCustomDomain
+    Properties:
+      DomainName: !Ref Domain
+      DomainValidationOptions:
+        - DomainName: !Ref Domain
+          ValidationDomain: !Ref TLD
+
+  #
+  # Load Balancers
+  #
+  LoadBalancer:
+    Type: AWS::ElasticLoadBalancingV2::LoadBalancer
+    Properties:
+      Name: !Sub ${AWS::StackName}-lb
+      Subnets:
+        - Fn::ImportValue:
+            !Sub "${VPCStack}-PublicSubnet1ID"
+        - Fn::ImportValue:
+            !Sub "${VPCStack}-PublicSubnet2ID"
+      SecurityGroups:
+        - !Ref LoadBalancerSecurityGroup
+
+  # We define a default target group here, as this is a mandatory Parameters
+  # when creating an Application Load Balancer Listener. This is not used, instead
+  # a target group is created per-service in each service template
+  DefaultTargetGroup:
+    Type: AWS::ElasticLoadBalancingV2::TargetGroup
+    Properties:
+      Name: !Sub ${AWS::StackName}-default
+      VpcId:
+        Fn::ImportValue:
+          !Sub "${VPCStack}-VPCID"
+      Port: 80
+      Protocol: HTTP
+
+  LoadBalancerListenerHttp:
+    Type: AWS::ElasticLoadBalancingV2::Listener
+    Properties:
+      LoadBalancerArn: !Ref LoadBalancer
+      Port: 80
+      Protocol: 'HTTP'
+      DefaultActions:
+        - Type: forward
+          TargetGroupArn: !Ref DefaultTargetGroup
+
+  LoadBalancerListenerHttps:
+    Type: AWS::ElasticLoadBalancingV2::Listener
+    Properties:
+      LoadBalancerArn: !Ref LoadBalancer
+      Port: 443
+      Protocol: 'HTTPS'
+      Certificates: !If [UseCustomDomain, [ {CertificateArn: !Ref SSL } ], []]
+      DefaultActions:
+        - Type: forward
+          TargetGroupArn: !Ref DefaultTargetGroup
+
+  #
+  # Route53 DNS record set to map our domain to API Gateway
+  #
+  DomainDNS:
+    Type: AWS::Route53::RecordSetGroup
+    Condition: UseCustomDomain
+    Properties:
+      HostedZoneName:
+        Fn::Join:
+          - ''
+          - - !Ref TLD
+            - '.'
+      RecordSets:
+        -
+          Name: !Ref Domain
+          Type: 'A'
+          AliasTarget:
+            HostedZoneId: !GetAtt LoadBalancer.CanonicalHostedZoneID
+            DNSName: !GetAtt LoadBalancer.DNSName
+
+  #
+  # ECS
+  #
+
+  # ECS/EC2 Roles
+  #
+  # This IAM Role is attached to all of the ECS hosts. It is based on the default role
+  # published here:
+  # http://docs.aws.amazon.com/AmazonECS/latest/developerguide/instance_IAM_role.html
+  #
+  # You can add other IAM policy statements here to allow access from your ECS hosts
+  # to other AWS services. Please note that this role will be used by ALL containers
+  # running on the ECS host.
+
+  ECSRole:
+    Type: AWS::IAM::Role
+    Properties:
+      AssumeRolePolicyDocument:
+        Statement:
+        - Effect: Allow
+          Principal:
+            Service: [ec2.amazonaws.com]
+          Action: ['sts:AssumeRole']
+      Path: /
+      Policies:
+      - PolicyName: ecs-service
+        PolicyDocument:
+          Statement:
+          - Effect: Allow
+            Action:
+              - 'ecs:CreateCluster'
+              - 'ecs:DeregisterContainerInstance'
+              - 'ecs:DiscoverPollEndpoint'
+              - 'ecs:Poll'
+              - 'ecs:RegisterContainerInstance'
+              - 'ecs:StartTelemetrySession'
+              - 'ecs:Submit*'
+              - 'logs:CreateLogStream'
+              - 'logs:PutLogEvents'
+              - 'ecr:BatchCheckLayerAvailability'
+              - 'ecr:BatchGetImage'
+              - 'ecr:GetDownloadUrlForLayer'
+              - 'ecr:GetAuthorizationToken'
+            Resource: '*'
+
+  ECSInstanceProfile:
+    Type: AWS::IAM::InstanceProfile
+    Properties:
+      Path: /
+      Roles:
+        - !Ref ECSRole
+
+  # ECS Cluster
+  ECSCluster:
+    Type: AWS::ECS::Cluster
+    Properties:
+      ClusterName: !Ref AWS::StackName
+
+  ECSLaunchConfiguration:
+    Type: AWS::AutoScaling::LaunchConfiguration
+    Properties:
+      ImageId: !FindInMap [AWSRegionToAMI, !Ref 'AWS::Region', AMI]
+      SecurityGroups:
+        - !Ref ECSHostSecurityGroup
+      InstanceType: !Ref InstanceType
+      IamInstanceProfile: !Ref ECSInstanceProfile
+      KeyName: !Ref 'KeyPairName'
+      UserData:
+        Fn::Base64: !Sub |
+          #!/bin/bash -xe
+          echo ECS_CLUSTER=${ECSCluster} >> /etc/ecs/ecs.config
+          yum install -y aws-cfn-bootstrap
+          /opt/aws/bin/cfn-signal -e $? --stack ${AWS::StackName} --resource ECSAutoScalingGroup --region ${AWS::Region}
+
+  ECSAutoScalingGroup:
+    Type: AWS::AutoScaling::AutoScalingGroup
+    Properties:
+      VPCZoneIdentifier:
+        - Fn::ImportValue:
+            !Sub "${VPCStack}-PublicSubnet1ID"
+        - Fn::ImportValue:
+            !Sub "${VPCStack}-PublicSubnet2ID"
+      LaunchConfigurationName: !Ref ECSLaunchConfiguration
+      MinSize: !Ref MinSize
+      MaxSize: !Ref MaxSize
+      DesiredCapacity: !Ref DesiredCapacity
+    CreationPolicy:
+      ResourceSignal:
+        Timeout: PT15M
+    UpdatePolicy:
+      AutoScalingReplacingUpdate:
+        WillReplace: 'true'
+      AutoScalingRollingUpdate:
+        MinInstancesInService: '1'
+        MaxBatchSize: '1'
+        PauseTime: PT15M
+        WaitOnResourceSignals: 'true'
+
+  CPUReservationPolicy:
+    Type: AWS::AutoScaling::ScalingPolicy
+    Properties:
+      AdjustmentType: ChangeInCapacity
+      AutoScalingGroupName: !Ref ECSAutoScalingGroup
+      Cooldown: 300
+      PolicyType: TargetTrackingScaling
+      TargetTrackingConfiguration:
+        CustomizedMetricSpecification:
+          Dimensions:
+            - Name: ClusterName
+              Value: !Ref ECSCluster
+          MetricName: CPUReservation
+          Namespace: AWS/ECS
+          Statistic: Average
+        TargetValue: !Ref TargetCPUReservation
+
+  MemoryReservationPolicy:
+    Type: AWS::AutoScaling::ScalingPolicy
+    Properties:
+      AdjustmentType: ChangeInCapacity
+      AutoScalingGroupName: !Ref ECSAutoScalingGroup
+      Cooldown: 300
+      PolicyType: TargetTrackingScaling
+      TargetTrackingConfiguration:
+        CustomizedMetricSpecification:
+          Dimensions:
+            - Name: ClusterName
+              Value: !Ref ECSCluster
+          MetricName: MemoryReservation
+          Namespace: AWS/ECS
+          Statistic: Average
+        TargetValue: !Ref TargetMemoryReservation
+
+Outputs:
+  ECSCluster:
+    Value: !Ref 'ECSCluster'
+    Export:
+      Name: !Sub '${AWS::StackName}-ECSCluster'
+  LoadBalancerListenerHttp:
+    Value: !Ref 'LoadBalancerListenerHttp'
+    Export:
+      Name: !Sub '${AWS::StackName}-LoadBalancerListenerHttp'
+  LoadBalancerListenerHttps:
+    Value: !Ref 'LoadBalancerListenerHttps'
+    Export:
+      Name: !Sub '${AWS::StackName}-LoadBalancerListenerHttps'
+  LoadBalancerUrl:
+    Value: !GetAtt LoadBalancer.DNSName
+    Export:
+      Name: !Sub '${AWS::StackName}-LoadBalancerUrl'
+  CustomDomainUrl:
+    Description: URL of your API endpoint
+    Condition: UseCustomDomain
+    Value: !Join
+      - ''
+      - - 'https://'
+        - !Ref Domain
+        - '/'
