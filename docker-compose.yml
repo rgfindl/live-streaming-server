@@ -7,5 +7,7 @@ services:
       - 8182:3000
     volumes:
       - ./mnt:/mnt
+    environment:
+      NODE_ENV: development
 
 version: "2"

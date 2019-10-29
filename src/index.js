@@ -1,74 +1,72 @@
-const express = require('express')
-const app = express()
-const dns = require('dns')
-app.use(express.json()) // for parsing application/json
-app.use(express.urlencoded({ extended: true })) // for parsing application/x-www-form-urlencoded
+require('dotenv-flow').config();
+const express = require('express');
+const _ = require('lodash');
+const chokidar = require('chokidar');
+const uuid = require('./lib/uuid');
+const logger = require('./lib/logger');
 
-const port = 3000
+const app = express();
+app.use(express.json()); // for parsing application/json
+app.use(express.urlencoded({ extended: true })); // for parsing application/x-www-form-urlencoded
+
+const events = {};
 
 app.post('/on-connect', (request, response) => {
-  console.log(JSON.stringify(request.body, null, 3));
+  logger.debug(JSON.stringify(request.body, null, 3));
   response.send();
-})
+});
 
 app.post('/on-play', (request, response) => {
-  console.log(JSON.stringify(request.body, null, 3));
+  logger.debug(JSON.stringify(request.body, null, 3));
   response.send();
-})
+});
 
 app.post('/on-publish', (request, response) => {
-  console.log(JSON.stringify(request.body, null, 3));
-  response.redirect(`${request.body.name}-eventId`);
-  //response.send();
-})
-
-app.post('/on-youtube-publish', (request, response) => {
-  console.log('on-youtube-publish');
-  console.log(JSON.stringify(request.body, null, 3));
-  if (request.body.app === 'youtube' && !request.body.youtubeKey) {
-    return response.redirect(`rtmp://no-address/youtube-off/${request.body.name}`);
+  logger.debug(JSON.stringify(request.body, null, 3));
+  const event = {
+    uuid: uuid()
+  };
+  if (request.body.facebook) {
+    logger.info('Push to facebook');
+    event.facebook = request.body.facebook;
   }
-  dns.lookup('a.rtmp.youtube.com', function(err, result) {
-    response.redirect(`rtmp://${result}/live2/${request.body.youtubeKey}`);
-  })
-})
-
-app.post('/on-twitch-publish', (request, response) => {
-  console.log('on-twitch-publish');
-  console.log(JSON.stringify(request.body, null, 3));
-  if (request.body.app === 'twitch' && !request.body.twitchKey) {
-    return response.redirect(`rtmp://no-address/twitch-off/${request.body.name}`);
+  if (request.body.youtube) {
+    logger.info('Push to youtube');
+    event.youtube = request.body.youtube;
   }
-  dns.lookup('rtmp.twitch.tv', function(err, result) {
-    response.redirect(`rtmp://${result}/${request.body.twitchKey}`);
-  })
-})
-
-app.post('/on-facebook-publish', (request, response) => {
-  console.log('on-facebook-publish');
-  console.log(JSON.stringify(request.body, null, 3));
-  if (request.body.app === 'facebook' && !request.body.facebookKey) {
-    return response.redirect(`rtmp://no-address/facebook-off/${request.body.name}`);
+  if (request.body.twitch) {
+    logger.info('Push to twitch');
+    event.twitch = request.body.twitch;
   }
-  dns.lookup('live-api.facebook.com', function(err, result) {
-    response.redirect(`rtmps://${result}:443/rtmp/${request.body.facebookKey}`);
-  })
-})
+  events[event.uuid] = event;
+  response.redirect(`${event.uuid}`);
+  // response.send();
+});
 
 app.post('/on-publish-done', (request, response) => {
-  console.log(JSON.stringify(request.body, null, 3));
+  logger.debug(JSON.stringify(request.body, null, 3));
   response.send();
-})
+});
 
 app.post('/on-play-done', (request, response) => {
-  console.log(JSON.stringify(request.body, null, 3));
+  logger.debug(JSON.stringify(request.body, null, 3));
+  try {
+    delete events[request.name];
+  } catch (err) {}
   response.send();
-})
+});
 
+logger.debug(`Start watcher - ${process.env.HLS_PATH}`);
+chokidar.watch(process.env.HLS_PATH, {
+  ignored: /(^|[\/\\])\../, // ignore dotfiles
+  persistent: true
+}).on('add', path => logger.debug(`File ${path} has been added`));
+
+const port = 3000;
 app.listen(port, (err) => {
   if (err) {
-    return console.log('something bad happened', err)
+    return logger.debug('something bad happened', err);
   }
 
-  console.log(`server is listening on ${port}`)
-})
+  return logger.debug(`server is listening on ${port}`);
+});

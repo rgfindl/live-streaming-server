@@ -21,7 +21,7 @@ RUN mkdir -p /usr/src/app
 
 COPY src/. /usr/src/app/
 RUN rm -rf /usr/src/app/node_modules
-RUN npm --prefix /usr/src/app install /usr/src/app
+RUN npm --prefix /usr/src/app install --production /usr/src/app
 
 # Add run script
 ADD run.sh /etc/nginx/run.sh
