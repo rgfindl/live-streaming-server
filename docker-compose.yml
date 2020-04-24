@@ -9,5 +9,9 @@ services:
       - ./mnt:/mnt
     environment:
       NODE_ENV: development
+      HLS_PATH: /mnt/hls
+      AWS_REGION: ${AWS_REGION}
+      AWS_ACCESS_KEY_ID: ${AWS_ACCESS_KEY_ID}
+      AWS_SECRET_ACCESS_KEY: ${AWS_SECRET_ACCESS_KEY}
 
 version: "2"

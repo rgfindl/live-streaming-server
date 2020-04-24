@@ -1,6 +1,6 @@
 #!/bin/bash
 
-PROFILE="--profile wp-sandbox"
+PROFILE="--profile bluefin"
 
 case $1 in
     vpc)
@@ -10,10 +10,10 @@ case $1 in
         --capabilities CAPABILITY_IAM \
         ${PROFILE}
         ;;
-    shared)
+    assets)
         aws cloudformation deploy \
-        --template-file shared.stack.yml \
-        --stack-name video-streaming-shared \
+        --template-file assets.stack.yml \
+        --stack-name video-streaming-assets \
         --capabilities CAPABILITY_IAM \
         ${PROFILE}
         ;;
