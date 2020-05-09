@@ -29,7 +29,7 @@ const handleMasterPlaylist = async (path, mediaRoot) => {
 };
 
 // HLS - test4/720p/index.m3u8
-const handlePlaylist = async (path, mediaRoot) => {
+const handlePlaylist = async (path, mediaRoot, vodName) => {
   console.log('handlePlaylist', path);
   if (await fs.exists(join(mediaRoot, path))) {
     const liveM3u8 = await fs.readFile(join(mediaRoot, path));
@@ -49,26 +49,29 @@ const handlePlaylist = async (path, mediaRoot) => {
     const appName = _.nth(paths, 1);
     if (_.isEqual(appName, VOD_APP_NAME)) {
       let vodM3u8;
-      const vodPath = join(mediaRoot, streamName, 'vod.m3u8');
-      if (await fs.exists(vodPath)) {
-        vodM3u8 = await fs.readFile(vodPath);
+      const vodFilename = vodName(streamName);
+      if (vodFilename) {
+        const vodPath = join(mediaRoot, streamName, vodFilename);
+        if (await fs.exists(vodPath)) {
+          vodM3u8 = await fs.readFile(vodPath);
+        }
+        vodM3u8 = m3u8.sync_m3u8(liveM3u8, vodM3u8, appName);
+        await fs.writeFile(vodPath, vodM3u8);
+        const params = {
+          Body: vodM3u8,
+          Bucket: process.env.ASSETS_BUCKET,
+          Key: `${streamName}/${vodFilename}`,
+          ContentType: 'application/x-mpegURL',
+          CacheControl: 'max-age=0'
+        };
+        await s3.putObject(params);
       }
-      vodM3u8 = m3u8.sync_m3u8(liveM3u8, vodM3u8, appName);
-      await fs.writeFile(vodPath, vodM3u8);
-      const params = {
-        Body: vodM3u8,
-        Bucket: process.env.ASSETS_BUCKET,
-        Key: `${streamName}/vod.m3u8`,
-        ContentType: 'application/x-mpegURL',
-        CacheControl: 'max-age=0'
-      };
-      await s3.putObject(params);
     }
   }
 };
 
 // TS  - media/test4/720p/20200504-1588591755.ts
-const handleSegment = async (path, mediaRoot) => {
+const handleSegment = async (path, mediaRoot, vodName) => {
   // TODO Check if valid before uploading.
   // ffprobe -v error -i /Users/findleyr/Documents/code/live-streaming-server/mnt/hls/2a9dafff-2676-7090-8625-b7916a001969_hd/21.ts
   const params = {
@@ -79,7 +82,7 @@ const handleSegment = async (path, mediaRoot) => {
     CacheControl: 'max-age=31536000'
   };
   await s3.putObject(params);
-  await handlePlaylist(_.join(_.union(_.initial(_.split(path, '/')), ['index.m3u8']), '/'), mediaRoot);
+  await handlePlaylist(_.join(_.union(_.initial(_.split(path, '/')), ['index.m3u8']), '/'), mediaRoot, vodName);
 };
 
 // ABR - media/test4/live.m3u8
@@ -87,31 +90,18 @@ const handleSegment = async (path, mediaRoot) => {
 // TS  - media/test4/720p/20200504-1588591755.ts
 // [360p, 480p, 720p]
 
-const onFile = async (absolutePath, type, mediaRoot) => {
+const onFile = async (absolutePath, type, mediaRoot, vodName) => {
   try {
     const path = _.trim(_.replace(absolutePath, mediaRoot, ''), '/');
     console.log(`File ${path} has been added`);
     if (_.endsWith(path, 'live.m3u8')) {
       await handleMasterPlaylist(path, mediaRoot);
     } else if (_.endsWith(path, '.ts')) {
-      await handleSegment(path, mediaRoot);
+      await handleSegment(path, mediaRoot, vodName);
     }
   } catch (err) {
     console.log(err);
   }
-};
-
-const finalizeVod = async (mediaRoot, streamName) => {
-  const vodPath = join(mediaRoot, streamName, 'vod.m3u8');
-  const vodM3u8 = await fs.readFile(vodPath);
-  const params = {
-    Body: vodM3u8,
-    Bucket: process.env.ASSETS_BUCKET,
-    Key: `${streamName}/vod-${(new Date()).getTime()}.m3u8`,
-    ContentType: 'application/x-mpegURL',
-    CacheControl: 'max-age=31536000'
-  };
-  await s3.putObject(params);
 };
 
 const createAbrPlaylist = async (mediaRoot, name) => {
@@ -120,7 +110,7 @@ const createAbrPlaylist = async (mediaRoot, name) => {
   await fs.writeFile(`${mediaRoot}/${name}/live.m3u8`, abrTemplate());
 };
 
-const s3Sync = (config) => {
+const s3Sync = (config, vodName) => {
   const mediaRoot = config.http.mediaroot;
   console.log(`Start watcher - ${process.env.NODE_ENV}, ${mediaRoot}`);
   chokidar.watch(mediaRoot, {
@@ -130,12 +120,11 @@ const s3Sync = (config) => {
       stabilityThreshold: 2000,
       pollInterval: 100
     }
-  }).on('add', (path) => onFile(path, 'add', mediaRoot))
-    .on('change', (path) => onFile(path, 'change', mediaRoot));
+  }).on('add', (path) => onFile(path, 'add', mediaRoot, vodName))
+    .on('change', (path) => onFile(path, 'change', mediaRoot, vodName));
 };
 
 module.exports = {
   s3Sync,
-  finalizeVod,
   createAbrPlaylist
 };

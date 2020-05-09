@@ -202,10 +202,16 @@ const config = {
 };
 
 this.dynamicSessions = new Map();
+this.streams = new Map();
+
+const vodName = (streamName) => {
+  if (!this.streams.has(streamName)) return false;
+  return `vod-${this.streams.get(streamName)}.m3u8`;
+};
 
 let nms = new NodeMediaServer(config)
 nms.run();
-hls.s3Sync(config);
+hls.s3Sync(config, vodName);
 
 nms.on('preConnect', (id, args) => {
   console.log('[NodeEvent on preConnect]', `id=${id} args=${JSON.stringify(args)}`);
@@ -230,9 +236,10 @@ nms.on('prePublish', (id, StreamPath, args) => {
 nms.on('postPublish', async (id, StreamPath, args) => {
   console.log('[NodeEvent on postPublish]', `id=${id} StreamPath=${StreamPath} args=${JSON.stringify(args)}`);
   if (StreamPath.indexOf('/720p/') != -1) {
-    const name = StreamPath.split('/').pop()
+    const name = StreamPath.split('/').pop();
+    this.streams.set(name, id);
     try {
-      await hls.createAbrPlaylist(config.http.mediaroot, name)
+      await hls.createAbrPlaylist(config.http.mediaroot, name);
     } catch (err) {
       console.log(err);
     }
@@ -304,12 +311,7 @@ nms.on('donePublish', async (id, StreamPath, args) => {
   if (StreamPath.indexOf('/720p/') != -1) {
     const name = StreamPath.split('/').pop();
     await timeout(15000);
-    try {
-      // Push vod.m3u8 with timestamp
-      await hls.finalizeVod(config.http.mediaroot, name);
-    } catch (err) {
-      console.log(err);
-    }
+    this.streams.delete(name);
     try {
       // Cleanup directory
       fs.rmdirSync(join(config.http.mediaroot, name));
@@ -321,18 +323,21 @@ nms.on('donePublish', async (id, StreamPath, args) => {
       let session = this.dynamicSessions.get(`youtube-${id}`);
       if (session) {
         session.end();
+        this.dynamicSessions.delete(`youtube-${id}`);
       }
     }
     if (args.facebook) {
       let session = this.dynamicSessions.get(`facebook-${id}`);
       if (session) {
         session.end();
+        this.dynamicSessions.delete(`facebook-${id}`);
       }
     }
     if (args.twitch) {
       let session = this.dynamicSessions.get(`twitch-${id}`);
       if (session) {
         session.end();
+        this.dynamicSessions.delete(`twitch-${id}`);
       }
     }
   }
