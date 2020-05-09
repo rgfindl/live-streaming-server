@@ -1,0 +1,17 @@
+version: '2'
+services:
+  live-streaming-server:
+    build:
+      context: .
+    volumes:
+      - ./media:/usr/src/app/media
+    ports:
+      - 8001-8002:8000
+      - 1936-1937:1935
+    environment:
+      FFMPEG_PATH: /usr/local/bin/ffmpeg
+      ASSETS_BUCKET: video-streaming-assets-assetsbucket-b7h0zjs5w8ry
+      MEDIA_ROOT: /usr/src/app/media
+      AWS_REGION: ${AWS_REGION}
+      AWS_ACCESS_KEY_ID: ${AWS_ACCESS_KEY_ID}
+      AWS_SECRET_ACCESS_KEY: ${AWS_SECRET_ACCESS_KEY}

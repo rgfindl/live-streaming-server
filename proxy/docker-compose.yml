@@ -1,0 +1,7 @@
+version: '2'
+services:
+  live-streaming-server-proxy:
+    build:
+      context: .
+    ports:
+      - 1935:1935

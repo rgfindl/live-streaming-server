@@ -1,0 +1,33 @@
+{
+  "name": "live-streaming-server",
+  "version": "1.0.0",
+  "description": "Ingest RTMP - Transcode into HLS - Relay to Social Media - Live Streaming",
+  "main": "app.js",
+  "scripts": {
+    "test": "node app.js"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/rgfindl/live-streaming-server.git"
+  },
+  "keywords": [
+    "rtmp",
+    "flv",
+    "server"
+  ],
+  "author": "Randy Findley",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/rgfindl/live-streaming-server/issues"
+  },
+  "homepage": "https://github.com/rgfindl/live-streaming-server#readme",
+  "dependencies": {
+    "aws-sdk": "^2.672.0",
+    "chokidar": "^3.4.0",
+    "lodash": "^4.17.15",
+    "node-media-server": "../../Node-Media-Server"
+  },
+  "engines": {
+    "node": ">=8.0.0"
+  }
+}
