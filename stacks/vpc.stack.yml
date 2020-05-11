@@ -26,7 +26,6 @@ Parameters:
       for ALL private subnets will be ignored.
     Type: String
   KeyPairName:
-    Default: 'video-streaming'
     Description: Public/private key pairs allow you to securely connect to your NAT
       instance after it launches. This is used only if the region does not support
       NAT gateways.

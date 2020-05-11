@@ -14,7 +14,7 @@ const playAuthorizer = (id, playStreamPath, playStreamId) => {
 };
 
 const config = {
-  logType: 2,
+  logType: 4,
   rtmp: {
     port: 1935,
     chunk_size: 60000,

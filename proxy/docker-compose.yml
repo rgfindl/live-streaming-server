@@ -1,7 +1,12 @@
 version: '2'
 services:
-  live-streaming-server-proxy:
+  live-streaming-proxy:
     build:
       context: .
     ports:
       - 1935:1935
+      - 8000:8000
+    environment:
+      AWS_REGION: ${AWS_REGION}
+      AWS_ACCESS_KEY_ID: ${AWS_ACCESS_KEY_ID}
+      AWS_SECRET_ACCESS_KEY: ${AWS_SECRET_ACCESS_KEY}

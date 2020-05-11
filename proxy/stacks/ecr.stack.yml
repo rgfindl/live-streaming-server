@@ -5,7 +5,6 @@ Parameters:
   RepositoryName:
     Type: String
     Description: RepositoryName
-    Default: 'video-streaming-service'
 
 Resources:
 

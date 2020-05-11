@@ -8,6 +8,8 @@ case $1 in
         --template-file vpc.stack.yml \
         --stack-name video-streaming-vpc \
         --capabilities CAPABILITY_IAM \
+        --parameter-overrides \
+        KeyPairName=video-streaming \
         ${PROFILE}
         ;;
     assets)
@@ -22,23 +24,11 @@ case $1 in
         --template-file ecs.stack.yml \
         --stack-name video-streaming-ecs \
         --capabilities CAPABILITY_IAM \
-        ${PROFILE}
-        ;;
-    ecr)
-        aws cloudformation deploy \
-        --template-file ecr.stack.yml \
-        --stack-name video-streaming-ecr \
-        --capabilities CAPABILITY_IAM \
-        ${PROFILE}
-        ;;
-    service)
-        aws cloudformation deploy \
-        --template-file service.stack.yml \
-        --stack-name video-streaming-service \
-        --capabilities CAPABILITY_IAM \
+        --parameter-overrides \
+        Name=video-streaming \
         ${PROFILE}
         ;;
     *)
-        echo $"Usage: $0 {vpc|shared|ecs|ecr|service}"
+        echo $"Usage: $0 {vpc|assets|ecs}"
         exit 1
 esac
