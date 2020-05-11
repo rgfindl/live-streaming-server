@@ -1,4 +1,8 @@
+# Live Streaming Server
 
+## TODO
+- Move to ECS with GPU optimized instances.  Fargate wasn't able to keep up with the FFMPEG transcoding.  720p was lagging behind.
+- Single FFMPEG command to perform HLS transcoding?  All 3 bitrates/sizes should be in-sync.
 
 ## Docker
 ```
