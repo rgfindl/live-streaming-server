@@ -16,64 +16,37 @@ const abrTemplate = () => {
   return line
 };
 
-// ABR - media/test4/index.m3u8
-const handleMasterPlaylist = async (path, mediaRoot) => {
-  const params = {
-    Body: await fs.readFile(join(mediaRoot, path)),
-    Bucket: process.env.ASSETS_BUCKET,
-    Key: path,
-    ContentType: 'application/x-mpegURL',
-    CacheControl: 'max-age=3600'
-  };
-  await s3.putObject(params);
-};
-
 // HLS - test4/720p/index.m3u8
-const handlePlaylist = async (path, mediaRoot, vodName) => {
+const handlePlaylist = async (path, mediaRoot, vodName, streamName, appName) => {
   console.log('handlePlaylist', path);
   if (await fs.exists(join(mediaRoot, path))) {
+    // Read 720p playlist
     const liveM3u8 = await fs.readFile(join(mediaRoot, path));
-    const params = {
-      Body: liveM3u8,
-      Bucket: process.env.ASSETS_BUCKET,
-      Key: path,
-      ContentType: 'application/x-mpegURL',
-      CacheControl: 'max-age=0'
-    };
-    await s3.putObject(params);
 
-    // TODO 
     // Put /vod.m3u8 with all segments and end tag.
-    const paths = _.split(path, '/');
-    const streamName = _.nth(paths, 0);
-    const appName = _.nth(paths, 1);
-    if (_.isEqual(appName, VOD_APP_NAME)) {
-      let vodM3u8;
-      const vodFilename = vodName(streamName);
-      if (vodFilename) {
-        const vodPath = join(mediaRoot, streamName, vodFilename);
-        if (await fs.exists(vodPath)) {
-          vodM3u8 = await fs.readFile(vodPath);
-        }
-        vodM3u8 = m3u8.sync_m3u8(liveM3u8, vodM3u8, appName);
-        await fs.writeFile(vodPath, vodM3u8);
-        const params = {
-          Body: vodM3u8,
-          Bucket: process.env.ASSETS_BUCKET,
-          Key: `${streamName}/${vodFilename}`,
-          ContentType: 'application/x-mpegURL',
-          CacheControl: 'max-age=0'
-        };
-        await s3.putObject(params);
+    let vodM3u8;
+    const vodFilename = vodName(streamName);
+    if (vodFilename) {
+      const vodPath = join(mediaRoot, streamName, vodFilename);
+      if (await fs.exists(vodPath)) {
+        vodM3u8 = await fs.readFile(vodPath);
       }
+      vodM3u8 = m3u8.sync_m3u8(liveM3u8, vodM3u8, appName);
+      await fs.writeFile(vodPath, vodM3u8);
+      const params = {
+        Body: vodM3u8,
+        Bucket: process.env.ASSETS_BUCKET,
+        Key: `${streamName}/${vodFilename}`,
+        ContentType: 'application/x-mpegURL',
+        CacheControl: 'max-age=3600'
+      };
+      await s3.putObject(params);
     }
   }
 };
 
 // TS  - media/test4/720p/20200504-1588591755.ts
-const handleSegment = async (path, mediaRoot, vodName) => {
-  // TODO Check if valid before uploading.
-  // ffprobe -v error -i /Users/findleyr/Documents/code/live-streaming-server/mnt/hls/2a9dafff-2676-7090-8625-b7916a001969_hd/21.ts
+const handleSegment = async (path, mediaRoot, vodName, streamName, appName) => {
   const params = {
     Body: fs.createReadStream(join(mediaRoot, path)),
     Bucket: process.env.ASSETS_BUCKET,
@@ -82,7 +55,6 @@ const handleSegment = async (path, mediaRoot, vodName) => {
     CacheControl: 'max-age=31536000'
   };
   await s3.putObject(params);
-  await handlePlaylist(_.join(_.union(_.initial(_.split(path, '/')), ['index.m3u8']), '/'), mediaRoot, vodName);
 };
 
 // ABR - media/test4/live.m3u8
@@ -93,11 +65,26 @@ const handleSegment = async (path, mediaRoot, vodName) => {
 const onFile = async (absolutePath, type, mediaRoot, vodName) => {
   try {
     const path = _.trim(_.replace(absolutePath, mediaRoot, ''), '/');
-    console.log(`File ${path} has been added`);
-    if (_.endsWith(path, 'live.m3u8')) {
-      await handleMasterPlaylist(path, mediaRoot);
-    } else if (_.endsWith(path, '.ts')) {
-      await handleSegment(path, mediaRoot, vodName);
+    if (_.endsWith(path, '.ts')) {
+      const paths = _.split(path, '/');
+      const streamName = _.nth(paths, 0);
+      const appName = _.nth(paths, 1);
+      if (_.isEqual(appName, VOD_APP_NAME)) {
+        console.log(`File ${path} has been ${type}`);
+        // Only upload 720p
+        await handleSegment(
+          path,
+          mediaRoot,
+          vodName,
+          streamName,
+          appName);
+        await handlePlaylist(
+          _.join(_.union(_.initial(_.split(path, '/')), ['index.m3u8']), '/'),
+          mediaRoot,
+          vodName,
+          streamName,
+          appName);
+      }
     }
   } catch (err) {
     console.log(err);
@@ -117,7 +104,7 @@ const s3Sync = (config, vodName) => {
     ignored: /(^|[\/\\])\../, // ignore dotfiles
     persistent: true,
     awaitWriteFinish: {
-      stabilityThreshold: 2000,
+      stabilityThreshold: 6000,
       pollInterval: 100
     }
   }).on('add', (path) => onFile(path, 'add', mediaRoot, vodName))

@@ -435,8 +435,9 @@ negotiator@0.6.2:
   resolved "https://registry.yarnpkg.com/negotiator/-/negotiator-0.6.2.tgz#feacf7ccf525a77ae9634436a64883ffeca346fb"
   integrity sha512-hZXc7K2e+PgeI1eDBe/10Ard4ekbfrrqG8Ep+8Jmf4JID2bNg7NvCPOZN+kfF574pFQI7mum2AUqDidoKqcTOw==
 
-node-media-server@../../Node-Media-Server:
+"node-media-server@https://github.com/rgfindl/Node-Media-Server":
   version "2.1.8"
+  resolved "https://github.com/rgfindl/Node-Media-Server#c36571c369253170e40f6cf157608e4f939246e9"
   dependencies:
     basic-auth-connect "^1.0.0"
     chalk "^2.4.2"

@@ -196,7 +196,7 @@ const vodName = (streamName) => {
 
 let nms = new NodeMediaServer(config)
 nms.run();
-//hls.s3Sync(config, vodName);
+hls.s3Sync(config, vodName);
 
 nms.on('preConnect', (id, args) => {
   console.log('[NodeEvent on preConnect]', `id=${id} args=${JSON.stringify(args)}`);
@@ -295,10 +295,14 @@ nms.on('donePublish', async (id, StreamPath, args) => {
   console.log('[NodeEvent on donePublish]', `id=${id} StreamPath=${StreamPath} args=${JSON.stringify(args)}`);
   if (StreamPath.indexOf('/hls/') != -1) {
     const name = StreamPath.split('/').pop();
-    await timeout(15000);
-    this.streams.delete(name);
+    const timeoutMs = _.isEqual(process.env.NODE_ENV, 'development') ?
+      1000 : 
+      2 * 60 * 1000;
+    await timeout(timeoutMs);
     try {
       // Cleanup directory
+      console.log('[Delete HLS Directory]', `dir=${join(config.http.mediaroot, name)}`);
+      this.streams.delete(name);
       fs.rmdirSync(join(config.http.mediaroot, name));
     } catch (err) {
       console.log(err);

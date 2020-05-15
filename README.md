@@ -1,6 +1,15 @@
 # live-streaming-server
 Ingest RTMP - Encode into HLS - Live Streaming
 
+## TODO
+- Move `server` to ECS cluster with some high performance GPU instances.
+- Try this encoding for better performance, `h264_nvenc uses the NVidia hardware assisted H.264 video encoder`
+- Reduce segment length for reduced latency?
+- Add Redis to store [stream name : streaming server ip] mapping.
+- Add HLS `origin` server with nginx proxy cache and cache lock. Fargate.
+  - Use single node.js backend which performs an internal redirect using the `X-Accel-Redirect` header to an nginx location which points to the correct streaming server, based on the Redis [stream name : streaming server ip] mapping.
+- Update live.finbits.io CDN to point to `origin` ALB.
+
 ## Send test stream
 ffmpeg -stream_loop -1 -re -i ~/Downloads/test-video.mp4 -c copy -f flv "rtmp://localhost:1935/stream/test2"
 

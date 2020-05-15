@@ -107,13 +107,14 @@ WORKDIR /usr/src/app
 
 COPY package*.json ./
 
-RUN yarn
+RUN yarn install --production
 
 COPY . .
 
 EXPOSE 1935 8000
 
 RUN which ffmpeg
+RUN ffmpeg -version
 
 # Add supervisord config
 RUN mkdir /var/logs

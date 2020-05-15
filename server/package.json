@@ -4,7 +4,8 @@
   "description": "Ingest RTMP - Transcode into HLS - Relay to Social Media - Live Streaming",
   "main": "app.js",
   "scripts": {
-    "test": "node app.js"
+    "test": "NODE_ENV=development node app.js",
+    "start": "NODE_ENV=production node app.js"
   },
   "repository": {
     "type": "git",
