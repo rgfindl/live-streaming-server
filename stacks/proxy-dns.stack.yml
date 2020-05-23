@@ -1,0 +1,156 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Description: Asset Resources
+
+#
+# CloudFormation input parameters
+#
+Parameters:
+  TLD:
+    Type: String
+    Description: TLD name needed by Route53 to perform DNS (example.com)
+    Default: 'finbits.io'
+  Domain:
+    Type: String
+    Description: Domain name for your website (example.com)
+    Default: 'live.finbits.io'
+  SSLArn:
+    Type: String
+    Description: 'Wildcard SSL ARN'
+    Default: 'arn:aws:acm:us-east-1:132093761664:certificate/1a4bc1e2-66b0-4d4d-9961-e182e6880c45'
+
+Conditions:
+  UseCustomDomain: !And
+    - !Not [!Equals [!Ref TLD, '']]
+    - !Not [!Equals [!Ref Domain, '']]
+    - !Not [!Equals [!Ref SSLArn, '']]
+
+Resources:
+
+  #
+  # CloudFront Origin Access Identity
+  #
+  CloudFrontOriginAccessIdentity:
+    Type: AWS::CloudFront::CloudFrontOriginAccessIdentity
+    Properties:
+      CloudFrontOriginAccessIdentityConfig:
+        Comment: 'S3 CF Origin Access Identity'    
+          
+  #
+  # Bucket
+  #
+  AssetsBucket:
+    Description: S3 Bucket
+    Type: AWS::S3::Bucket
+    Properties:
+      AccessControl: 'Private'
+      CorsConfiguration: 
+        CorsRules:
+          - AllowedHeaders: ['*']
+            AllowedMethods: ['GET','HEAD']
+            AllowedOrigins: ['*']
+            MaxAge: 3000
+
+  #
+  # S3 bucket policy.
+  #
+  BucketPolicy:
+    Type: 'AWS::S3::BucketPolicy'
+    DependsOn: CloudFrontOriginAccessIdentity
+    Properties:
+      Bucket: !Ref AssetsBucket
+      PolicyDocument:
+        Statement:
+          - Action:
+              - 's3:*'
+            Effect: 'Allow'
+            Resource:
+              - !Sub 'arn:aws:s3:::${AssetsBucket}'
+              - !Sub 'arn:aws:s3:::${AssetsBucket}/*'
+            Principal:
+              AWS: !Sub 'arn:aws:iam::cloudfront:user/CloudFront Origin Access Identity ${CloudFrontOriginAccessIdentity}'
+          - Action:
+              - 's3:*'
+            Effect: 'Allow'
+            Resource:
+              - !Sub 'arn:aws:s3:::${AssetsBucket}'
+              - !Sub 'arn:aws:s3:::${AssetsBucket}/*'
+            Principal:
+              AWS: 'arn:aws:iam::132093761664:user/cli'
+
+  #
+  # CloudFront
+  #
+  AssetsCloudFront:
+    Type: 'AWS::CloudFront::Distribution'
+    DependsOn: CloudFrontOriginAccessIdentity
+    Properties:
+      DistributionConfig:
+        Aliases:
+          - !Ref Domain
+        Enabled: true
+        PriceClass: 'PriceClass_All'
+        HttpVersion: 'http2'
+        CustomErrorResponses:
+          - ErrorCachingMinTTL: 0
+            ErrorCode: 404
+        Origins:
+          - DomainName: !Sub '${AssetsBucket}.s3.amazonaws.com'
+            Id: !Sub 'S3-${AssetsBucket}'
+            S3OriginConfig:
+              OriginAccessIdentity: !Sub 'origin-access-identity/cloudfront/${CloudFrontOriginAccessIdentity}'
+        DefaultCacheBehavior:
+          AllowedMethods:
+            - HEAD
+            - GET
+            - OPTIONS
+          CachedMethods:
+            - HEAD
+            - GET
+            - OPTIONS
+          TargetOriginId: !Sub 'S3-${AssetsBucket}'
+          ForwardedValues:
+            QueryString: 'false'
+            Cookies:
+              Forward: none
+            Headers:
+              - 'Origin'
+              - 'Access-Control-Request-Headers'
+              - 'Access-Control-Request-Method'
+          ViewerProtocolPolicy: !If [UseCustomDomain, "redirect-to-https", "allow-all"]
+          MinTTL: 0
+          DefaultTTL: 86400
+          MaxTTL: 31536000
+        Restrictions:
+          GeoRestriction:
+            RestrictionType: none
+        ViewerCertificate:
+          SslSupportMethod: !If [UseCustomDomain, "sni-only", !Ref "AWS::NoValue"]
+          MinimumProtocolVersion: !If [UseCustomDomain, "TLSv1", !Ref "AWS::NoValue"]
+          AcmCertificateArn: !If [UseCustomDomain, !Ref SSLArn, !Ref "AWS::NoValue"]
+          CloudFrontDefaultCertificate: !If [UseCustomDomain, !Ref "AWS::NoValue", true]
+
+  #
+  # Route53 DNS record set to map our domain to our CDN
+  #
+  DomainDNS:
+    Type: AWS::Route53::RecordSetGroup
+    Condition: UseCustomDomain
+    Properties:
+      HostedZoneName: !Sub '${TLD}.'
+      RecordSets:
+        -
+          Name: !Ref Domain
+          Type: 'A'
+          AliasTarget:
+            HostedZoneId: 'Z2FDTNDATAQYW2' # http://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/aws-properties-route53-aliastarget.html#cfn-route53-aliastarget-hostedzoneid
+            DNSName: !GetAtt AssetsCloudFront.DomainName
+
+Outputs:
+  AssetsBucket:
+    Value: !Ref 'AssetsBucket'
+    Export:
+      Name: !Sub '${AWS::StackName}-AssetsBucket'
+  AssetsCloudFront:
+    Value: !GetAtt AssetsCloudFront.DomainName
+    Export:
+      Name: !Sub '${AWS::StackName}-AssetsCloudFront'

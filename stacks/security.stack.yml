@@ -1,0 +1,140 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Description: 'Security'
+
+Parameters:
+  VPCStack:
+    Default: 'video-streaming-vpc'
+    Type: String
+    Description: VPC Stack Name
+
+
+Resources:
+
+  #
+  # ECS/EC2
+  #
+
+  ECSHostSecurityGroup:
+    Type: AWS::EC2::SecurityGroup
+    Properties:
+      GroupDescription: Access to the ECS hosts and the tasks/containers that run on them
+      VpcId:
+        Fn::ImportValue:
+          !Sub '${VPCStack}-VPCID'
+
+  ECSHostSecurityGroupIngressProxy:
+    Type: AWS::EC2::SecurityGroupIngress
+    Properties:
+      Description: Access to the Server from the Proxy
+      GroupId: !Ref ECSHostSecurityGroup
+      SourceSecurityGroupId: !Ref ProxyContainerSecurityGroup
+      IpProtocol: -1
+
+  ECSHostSecurityGroupIngressOrigin:
+    Type: AWS::EC2::SecurityGroupIngress
+    Properties:
+      Description: Access to the Server from the Origin
+      GroupId: !Ref ECSHostSecurityGroup
+      SourceSecurityGroupId: !Ref OriginContainerSecurityGroup
+      IpProtocol: -1
+
+  #
+  # Redis
+  #
+
+  RedisSecurityGroup:
+    Type: AWS::EC2::SecurityGroup
+    Properties:
+      GroupDescription: Access to Elasticache cluster
+      VpcId:
+        Fn::ImportValue:
+          !Sub '${VPCStack}-VPCID'
+
+  RedisSecurityGroupIngressOrigin:
+    Type: AWS::EC2::SecurityGroupIngress
+    Properties:
+      Description: Access to Redis from the Origin
+      GroupId: !Ref RedisSecurityGroup
+      SourceSecurityGroupId: !Ref OriginContainerSecurityGroup
+      IpProtocol: -1
+
+  RedisSecurityGroupIngressServer:
+    Type: AWS::EC2::SecurityGroupIngress
+    Properties:
+      Description: Access to Redis from the Server
+      GroupId: !Ref RedisSecurityGroup
+      SourceSecurityGroupId: !Ref ECSHostSecurityGroup
+      IpProtocol: -1
+
+  #
+  # Origin
+  #
+
+  OriginLoadBalancerSecurityGroup:
+    Type: AWS::EC2::SecurityGroup
+    Properties:
+      VpcId:
+        Fn::ImportValue:
+          !Sub "${VPCStack}-VPCID"
+      GroupDescription: Access to the Origin Load Balancer
+      SecurityGroupIngress:
+        - IpProtocol: tcp
+          FromPort: 80
+          ToPort: 80
+          CidrIp: 0.0.0.0/0
+        - IpProtocol: tcp
+          FromPort: 443
+          ToPort: 443
+          CidrIp: 0.0.0.0/0
+
+  OriginContainerSecurityGroup:
+    Type: AWS::EC2::SecurityGroup
+    Properties:
+      GroupDescription: Access to the Origin containers
+      VpcId:
+        Fn::ImportValue:
+          !Sub "${VPCStack}-VPCID"
+      SecurityGroupIngress:
+        - IpProtocol: tcp
+          FromPort: 80
+          ToPort: 80
+          SourceSecurityGroupId: !Ref OriginLoadBalancerSecurityGroup
+
+  #
+  # Proxy
+  #
+
+  ProxyContainerSecurityGroup:
+    Type: AWS::EC2::SecurityGroup
+    Properties:
+      GroupDescription: Access to the Proxy containers
+      VpcId:
+        Fn::ImportValue:
+          !Sub "${VPCStack}-VPCID"
+      SecurityGroupIngress:
+        - IpProtocol: tcp
+          FromPort: 1935
+          ToPort: 1935
+          CidrIp: 0.0.0.0/0
+
+Outputs:
+  ECSHostSecurityGroup:
+    Value: !Ref 'ECSHostSecurityGroup'
+    Export:
+      Name: !Sub '${AWS::StackName}-ECSHostSecurityGroup'
+  RedisSecurityGroup:
+    Value: !Ref 'RedisSecurityGroup'
+    Export:
+      Name: !Sub '${AWS::StackName}-RedisSecurityGroup'
+  OriginLoadBalancerSecurityGroup:
+    Value: !Ref 'OriginLoadBalancerSecurityGroup'
+    Export:
+      Name: !Sub '${AWS::StackName}-OriginLoadBalancerSecurityGroup'
+  OriginContainerSecurityGroup:
+    Value: !Ref 'OriginContainerSecurityGroup'
+    Export:
+      Name: !Sub '${AWS::StackName}-OriginContainerSecurityGroup'
+  ProxyContainerSecurityGroup:
+    Value: !Ref 'ProxyContainerSecurityGroup'
+    Export:
+      Name: !Sub '${AWS::StackName}-ProxyContainerSecurityGroup'

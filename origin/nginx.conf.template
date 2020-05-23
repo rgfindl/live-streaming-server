@@ -1,0 +1,95 @@
+worker_processes  auto;
+
+error_log /dev/stdout info;
+
+
+events {
+    worker_connections  1024;
+}
+
+http {
+    include       /etc/nginx/mime.types;
+    default_type  application/octet-stream;
+
+    log_format  main  '$remote_addr - $remote_user [$time_local] "$request" '
+                      '$status $body_bytes_sent "$http_referer" '
+                      '"$http_user_agent" "$http_x_forwarded_for"';
+
+    access_log /dev/stdout main;
+
+    sendfile        on;
+
+    keepalive_timeout  65;
+
+    gzip on;
+
+    proxy_cache_path /tmp/cache/ levels=1:2 keys_zone=CONTENTCACHE:10m max_size=15g inactive=240m use_temp_path=off;
+
+    ignore_invalid_headers off;
+
+    upstream node-backend {
+        server localhost:3000 max_fails=0;
+    }
+
+    <% servers.forEach(function(server, index) { %>
+    upstream media<%= index %>-backend {
+        server <%= server %> max_fails=0;
+    }
+    <% }); %>
+
+    server {
+        listen 80;
+        server_name localhost;
+        sendfile off;
+
+        location ~ ^/live/(.*\.m3u8)$ {
+            proxy_pass http://node-backend/live/$1$is_args$args;
+
+            #
+            # Cache results on local disc
+            #
+            proxy_cache CONTENTCACHE;
+            proxy_cache_lock on;
+            proxy_cache_key $scheme$proxy_host$uri;
+            proxy_cache_valid 1s;
+            proxy_cache_use_stale error timeout invalid_header updating http_500 http_502 http_503 http_504;
+        }
+
+        location ~ ^/live/(.*\.ts)$ {
+            proxy_pass http://node-backend/live/$1$is_args$args;
+
+            #
+            # Cache results on local disc
+            #
+            proxy_cache CONTENTCACHE;
+            proxy_cache_lock on;
+            proxy_cache_key $scheme$proxy_host$uri;
+            proxy_cache_valid 60s;
+            proxy_cache_use_stale error timeout invalid_header updating http_500 http_502 http_503 http_504;
+        }
+
+        <% servers.forEach(function(server, index) { %>
+        location ~ ^/<%= server %>/live/(.*)$ {
+            internal;
+            proxy_pass http://media<%= index %>-backend/live/$1$is_args$args;
+        }
+        <% }); %>
+
+        location ^/healthcheck$ {
+            proxy_pass http://node-backend/healthcheck$is_args$args;
+        }
+
+        location /nginx_status {
+            stub_status on;
+
+            access_log off;
+            allow 127.0.0.1;
+            deny all;
+        }
+
+        location / {
+            proxy_pass http://node-backend/;
+        }
+
+    }
+}

@@ -1,0 +1,19 @@
+version: '2'
+services:
+  live-streaming-origin:
+    build:
+      context: .
+    ports:
+      - 9000:80
+    environment:
+      AWS_REGION: ${AWS_REGION}
+      AWS_ACCESS_KEY_ID: ${AWS_ACCESS_KEY_ID}
+      AWS_SECRET_ACCESS_KEY: ${AWS_SECRET_ACCESS_KEY}
+      CACHE_DOMAIN: redis
+    links:
+      - redis
+  redis:
+    image: redis
+    container_name: cache
+    expose:
+      - 6379

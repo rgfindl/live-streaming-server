@@ -1,0 +1,83 @@
+AWSTemplateFormatVersion: "2010-09-09"
+Description: "Redis Cluster"
+
+Parameters:
+  VPCStack:
+    Default: 'video-streaming-vpc'
+    Type: String
+    Description: VPC Stack Name
+  SecurityStack:
+    Default: 'video-streaming-security'
+    Type: String
+    Description: Security Stack Name
+  ECSStack:
+    Default: 'video-streaming-ecs'
+    Type: String
+    Description: ECS Stack Name
+  NodeType:
+    Type: "String"
+    Description: "Compute type to use for cache nodes."
+    Default: 'cache.t2.micro'
+  NumCacheNodes:
+    Type: "String"
+    Description: "Number of cache nodes"
+    Default: 1
+  TLD:
+    Type: String
+    Default: internal-finbits.io
+  Domain:
+    Type: String
+    Default: cache.internal-finbits.io
+Resources:
+
+  CacheSubnetGroup:
+    Type: AWS::ElastiCache::SubnetGroup
+    Properties:
+      Description: "Cache subnet group for internal subnets."
+      CacheSubnetGroupName: !Sub "csg-${AWS::StackName}"
+      SubnetIds:
+        - Fn::ImportValue:
+            !Sub "${VPCStack}-PublicSubnet1ID"
+        - Fn::ImportValue:
+            !Sub "${VPCStack}-PublicSubnet2ID"
+
+  RedisCluster:
+    Type: AWS::ElastiCache::ReplicationGroup
+    Properties:
+      ReplicationGroupId: !Sub '${AWS::StackName}'
+      AutomaticFailoverEnabled: false
+      AutoMinorVersionUpgrade: true
+      CacheNodeType: !Ref NodeType
+      CacheSubnetGroupName:
+        Ref: CacheSubnetGroup
+      Engine: redis
+      EngineVersion: '4.0.10'
+      NumCacheClusters: !Ref NumCacheNodes
+      Port: 6379
+      PreferredMaintenanceWindow: sun:05:00-sun:09:00
+      ReplicationGroupDescription: A sample replication group
+      SecurityGroupIds:
+        - Fn::ImportValue:
+            !Sub '${SecurityStack}-RedisSecurityGroup'
+      SnapshotRetentionLimit: 5
+      SnapshotWindow: 10:00-12:00
+
+  DNSRecord:
+    Type: AWS::Route53::RecordSetGroup
+    Properties:
+      HostedZoneName: !Sub '${TLD}.'
+      RecordSets:
+        - Name: !Ref Domain
+          Type: CNAME
+          TTL: 300
+          ResourceRecords: [!GetAtt RedisCluster.PrimaryEndPoint.Address]
+
+Outputs:
+  RedisCluster:
+    Value: !GetAtt RedisCluster.PrimaryEndPoint.Address
+    Export:
+      Name: !Sub '${AWS::StackName}-RedisCluster'
+  Domain:
+    Value: !Ref Domain
+    Export:
+      Name: !Sub '${AWS::StackName}-Domain'

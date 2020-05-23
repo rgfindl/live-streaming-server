@@ -19,6 +19,13 @@ case $1 in
         --capabilities CAPABILITY_IAM \
         ${PROFILE}
         ;;
+    proxy-dns)
+        aws cloudformation deploy \
+        --template-file proxy-dns.stack.yml \
+        --stack-name video-streaming-proxy-dns \
+        --capabilities CAPABILITY_IAM \
+        ${PROFILE}
+        ;;
     ecs)
         aws cloudformation deploy \
         --template-file ecs.stack.yml \
@@ -28,7 +35,21 @@ case $1 in
         Name=video-streaming \
         ${PROFILE}
         ;;
+    redis)
+        aws cloudformation deploy \
+        --template-file redis.stack.yml \
+        --stack-name video-streaming-redis \
+        --capabilities CAPABILITY_IAM \
+        ${PROFILE}
+        ;;
+    security)
+        aws cloudformation deploy \
+        --template-file security.stack.yml \
+        --stack-name video-streaming-security \
+        --capabilities CAPABILITY_IAM \
+        ${PROFILE}
+        ;;
     *)
-        echo $"Usage: $0 {vpc|assets|ecs}"
+        echo $"Usage: $0 {vpc|assets|proxy-dns|ecs|redis|security}"
         exit 1
 esac

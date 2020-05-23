@@ -1,5 +1,5 @@
 AWSTemplateFormatVersion: '2010-09-09'
-Description: Live Streaming Proxy
+Description: Live Streaming Origin
 Parameters:
 
   VPCStack:
@@ -17,19 +17,31 @@ Parameters:
     Type: String
     Description: ECS Stack Name
 
+  RedisStack:
+    Default: 'video-streaming-redis'
+    Type: String
+    Description: Redis Stack Name
+
   DesiredCount:
     Type: Number
-    Default: '2'
+    Default: '1'
     Description: Desired task count
 
   Version:
     Type: String
     Description: Service version
 
-  ContainerPort:
+  TLD:
     Type: String
-    Description: Container Port
-    Default: 1935
+    Default: finbits.io
+
+  Domain:
+    Type: String
+    Default: stream.finbits.io
+
+  SSLArn:
+    Type: String
+    Default: 'arn:aws:acm:us-east-1:132093761664:certificate/1a4bc1e2-66b0-4d4d-9961-e182e6880c45'
 
 Resources:
 
@@ -103,7 +115,7 @@ Resources:
         - Name: !Ref AWS::StackName
           Image: !Sub "${AWS::AccountId}.dkr.ecr.us-east-1.amazonaws.com/${AWS::StackName}:${Version}"
           PortMappings:
-            - ContainerPort: !Ref ContainerPort
+            - ContainerPort: 80
           Environment:
             - Name: AWS_REGION
               Value: !Ref AWS::Region
@@ -113,6 +125,10 @@ Resources:
               Value: 'production'
             - Name: AWS_ACCOUNT_ID
               Value: !Ref AWS::AccountId
+            - Name: CACHE_DOMAIN
+              Value: 
+                Fn::ImportValue:
+                  !Sub "${RedisStack}-Domain"
           LogConfiguration:
             LogDriver: awslogs
             Options:
@@ -120,8 +136,77 @@ Resources:
               awslogs-region: !Ref AWS::Region
               awslogs-stream-prefix: ecs
 
+  #
+  # Load Balancers
+  #
+  LoadBalancer:
+    Type: AWS::ElasticLoadBalancingV2::LoadBalancer
+    Properties:
+      Name: !Sub ${AWS::StackName}-lb
+      Subnets:
+        - Fn::ImportValue:
+            !Sub "${VPCStack}-PublicSubnet1ID"
+        - Fn::ImportValue:
+            !Sub "${VPCStack}-PublicSubnet2ID"
+      SecurityGroups:
+        - Fn::ImportValue:
+            !Sub '${SecurityStack}-OriginLoadBalancerSecurityGroup'
+
+  DefaultTargetGroup:
+    Type: AWS::ElasticLoadBalancingV2::TargetGroup
+    DependsOn: LoadBalancer
+    Properties:
+      Name: !Sub ${AWS::StackName}
+      VpcId:
+        Fn::ImportValue:
+          !Sub "${VPCStack}-VPCID"
+      Port: 80
+      Protocol: HTTP
+      Matcher:
+        HttpCode: 200-299
+      TargetType: ip
+      HealthCheckIntervalSeconds: 30
+      HealthCheckPath: '/healthcheck'
+      HealthCheckProtocol: HTTP
+      HealthCheckTimeoutSeconds: 5
+      HealthyThresholdCount: 2
+      UnhealthyThresholdCount: 10
+
+  LoadBalancerListenerHttp:
+    Type: AWS::ElasticLoadBalancingV2::Listener
+    DependsOn:
+      - LoadBalancer
+      - DefaultTargetGroup
+    Properties:
+      LoadBalancerArn: !Ref LoadBalancer
+      Port: 80
+      Protocol: 'HTTP'
+      DefaultActions:
+        - Type: forward
+          TargetGroupArn: !Ref DefaultTargetGroup
+
+  LoadBalancerListenerHttps:
+    Type: AWS::ElasticLoadBalancingV2::Listener
+    DependsOn:
+      - LoadBalancer
+      - DefaultTargetGroup
+    Properties:
+      LoadBalancerArn: !Ref LoadBalancer
+      Port: 443
+      Protocol: 'HTTPS'
+      Certificates:
+        - CertificateArn: !Ref SSLArn
+      DefaultActions:
+        - Type: forward
+          TargetGroupArn: !Ref DefaultTargetGroup
+
   Service:
     Type: AWS::ECS::Service
+    DependsOn: 
+      - LoadBalancer
+      - DefaultTargetGroup
+      - LoadBalancerListenerHttp
+      - LoadBalancerListenerHttps
     Properties:
       ServiceName: !Ref AWS::StackName
       Cluster:
@@ -141,7 +226,26 @@ Resources:
                 !Sub "${VPCStack}-PublicSubnet2ID"
           SecurityGroups:
             - Fn::ImportValue:
-                !Sub '${SecurityStack}-ProxyContainerSecurityGroup'
+                !Sub '${SecurityStack}-OriginContainerSecurityGroup'
+      HealthCheckGracePeriodSeconds: 30
+      LoadBalancers:
+        - ContainerName: !Ref AWS::StackName
+          ContainerPort: 80
+          TargetGroupArn: !Ref DefaultTargetGroup
+
+  #
+  # Route53 DNS record set to map our domain to our CDN
+  #
+  DomainDNS:
+    Type: AWS::Route53::RecordSetGroup
+    Properties:
+      HostedZoneName: !Sub '${TLD}.'
+      RecordSets:
+        - Name: !Ref Domain
+          Type: 'A'
+          AliasTarget:
+            HostedZoneId: !GetAtt LoadBalancer.CanonicalHostedZoneID
+            DNSName: !GetAtt LoadBalancer.DNSName
 
 Outputs:
   Service:

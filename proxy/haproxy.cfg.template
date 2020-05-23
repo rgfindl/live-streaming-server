@@ -26,8 +26,6 @@ backend bk_http
 backend bk_rtmp 
  mode tcp
  balance roundrobin
- {% if SERVERS|length %}
- {% for IP in SERVERS.split('\t') %}
- server media{{ loop.index }} {{ IP }}:1935 check maxconn 200 weight 10
- {% endfor %}
- {% endif %}
+ <% servers.forEach(function(server, index) { %>
+ server media<%= index %> <%= server %> check maxconn 200 weight 10
+ <% }); %>

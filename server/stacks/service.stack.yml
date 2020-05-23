@@ -1,5 +1,5 @@
 AWSTemplateFormatVersion: '2010-09-09'
-Description: Live Streaming Proxy
+Description: Live Streaming Server
 Parameters:
 
   VPCStack:
@@ -17,6 +17,11 @@ Parameters:
     Type: String
     Description: Proxy Stack Name
 
+  OriginStack:
+    Default: 'video-streaming-origin'
+    Type: String
+    Description: Origin Stack Name
+
   AssetsStack:
     Default: 'video-streaming-assets'
     Type: String
@@ -31,10 +36,20 @@ Parameters:
     Type: String
     Description: Service version
 
-  ContainerPort:
+  RtmpPort:
     Type: String
-    Description: Container Port
+    Description: Rtmp Port
     Default: 1935
+
+  HttpPort:
+    Type: String
+    Description: Http Port
+    Default: 8000
+
+  TaskMemory:
+    Type: Number
+    Description: Task Memory Max
+    Default:  128 #31232
 
 Resources:
 
@@ -68,47 +83,22 @@ Resources:
                   - '*'
                 Resource:
                   - '*'
-
-  # A role needed by ECS
-  ExecutionRole:
-    Type: AWS::IAM::Role
-    Properties:
-      RoleName: !Sub ecs-execution-${AWS::StackName}
-      AssumeRolePolicyDocument:
-        Statement:
-          - Effect: Allow
-            Principal:
-              Service: ecs-tasks.amazonaws.com
-            Action: 'sts:AssumeRole'
-      ManagedPolicyArns:
-        - 'arn:aws:iam::aws:policy/service-role/AmazonECSTaskExecutionRolePolicy'
-
+  
   TaskDefinition:
     Type: AWS::ECS::TaskDefinition
     Properties:
       Family: !Ref AWS::StackName
       TaskRoleArn: !GetAtt TaskRole.Arn
-      ExecutionRoleArn: !GetAtt ExecutionRole.Arn
-      NetworkMode: awsvpc
-      RequiresCompatibilities:
-        - FARGATE
-      # 256 (.25 vCPU) - Available memory values: 0.5GB, 1GB, 2GB
-      # 512 (.5 vCPU) - Available memory values: 1GB, 2GB, 3GB, 4GB
-      # 1024 (1 vCPU) - Available memory values: 2GB, 3GB, 4GB, 5GB, 6GB, 7GB, 8GB
-      # 2048 (2 vCPU) - Available memory values: Between 4GB and 16GB in 1GB increments
-      # 4096 (4 vCPU) - Available memory values: Between 8GB and 30GB in 1GB increments
-      Cpu: 2048
-      # 0.5GB, 1GB, 2GB - Available cpu values: 256 (.25 vCPU)
-      # 1GB, 2GB, 3GB, 4GB - Available cpu values: 512 (.5 vCPU)
-      # 2GB, 3GB, 4GB, 5GB, 6GB, 7GB, 8GB - Available cpu values: 1024 (1 vCPU)
-      # Between 4GB and 16GB in 1GB increments - Available cpu values: 2048 (2 vCPU)
-      # Between 8GB and 30GB in 1GB increments - Available cpu values: 4096 (4 vCPU)
-      Memory: 4GB
       ContainerDefinitions:
         - Name: !Ref AWS::StackName
+          Essential: true
           Image: !Sub "${AWS::AccountId}.dkr.ecr.us-east-1.amazonaws.com/${AWS::StackName}:${Version}"
+          Memory: !Ref TaskMemory
           PortMappings:
-            - ContainerPort: !Ref ContainerPort
+            - ContainerPort: !Ref RtmpPort
+              Protocol: tcp
+            - ContainerPort: !Ref HttpPort
+              Protocol: tcp
           Environment:
             - Name: AWS_REGION
               Value: !Ref AWS::Region
@@ -127,41 +117,6 @@ Resources:
             Options:
               awslogs-group: !Ref AWS::StackName
               awslogs-region: !Ref AWS::Region
-              awslogs-stream-prefix: ecs
-
-  ContainerSecurityGroup:
-    Type: AWS::EC2::SecurityGroup
-    Properties:
-      GroupDescription: !Ref AWS::StackName
-      VpcId:
-        Fn::ImportValue:
-          !Sub "${VPCStack}-VPCID"
-      SecurityGroupIngress:
-        - IpProtocol: tcp
-          FromPort: !Ref ContainerPort
-          ToPort: !Ref ContainerPort
-          SourceSecurityGroupId:
-            Fn::ImportValue:
-              !Sub "${ProxyStack}-ContainerSecurityGroup"
-
-  DnsNamespace:
-    Type: AWS::ServiceDiscovery::PrivateDnsNamespace
-    Properties:
-      Name: 'internal.finbits.io'
-      Vpc:
-        Fn::ImportValue:
-          !Sub "${VPCStack}-VPCID"
-
-  ServiceDiscovery:
-    Type: AWS::ServiceDiscovery::Service
-    Properties:
-      DnsConfig:
-        DnsRecords:
-          - Type: A
-            TTL: 60
-        RoutingPolicy: WEIGHTED
-      Name: !Ref AWS::StackName
-      NamespaceId: !Ref DnsNamespace
 
   Service:
     Type: AWS::ECS::Service
@@ -172,19 +127,7 @@ Resources:
           !Sub "${ECSStack}-ECSCluster"
       DesiredCount: !Ref DesiredCount
       TaskDefinition: !Ref TaskDefinition
-      LaunchType: FARGATE
-      NetworkConfiguration: 
-        AwsvpcConfiguration:
-          AssignPublicIp: ENABLED
-          Subnets:
-            - Fn::ImportValue:
-                !Sub "${VPCStack}-PublicSubnet1ID"
-            - Fn::ImportValue:
-                !Sub "${VPCStack}-PublicSubnet2ID"
-          SecurityGroups:
-            - !Ref ContainerSecurityGroup
-      ServiceRegistries:
-        - RegistryArn: !GetAtt ServiceDiscovery.Arn
+      LaunchType: EC2
       
 
 Outputs:
@@ -200,15 +143,3 @@ Outputs:
     Value: !Ref 'CloudWatchLogsGroup'
     Export:
       Name: !Sub '${AWS::StackName}-CloudWatchLogsGroup'
-  ContainerSecurityGroup:
-    Value: !Ref ContainerSecurityGroup
-    Export:
-      Name: !Sub '${AWS::StackName}-ContainerSecurityGroup'
-  DnsNamespace:
-    Value: !Ref DnsNamespace
-    Export:
-      Name: !Sub '${AWS::StackName}-DnsNamespace'
-  ServiceDiscovery:
-    Value: !Ref ServiceDiscovery
-    Export:
-      Name: !Sub '${AWS::StackName}-ServiceDiscovery'

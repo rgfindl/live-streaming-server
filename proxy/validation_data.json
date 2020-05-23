@@ -1,0 +1,583 @@
+{
+  "independentSegments" : false,
+  "gzipEncoded" : false,
+  "validatorTimestamp" : "2020-05-21T15:18:13-04:00",
+  "dataID" : 0,
+  "url" : "https:\/\/d3rtz3mdbmjoag.cloudfront.net\/wp-cmg\/2020\/05\/18\/5ec2b75acff47e000160000b\/t_d2abe7d39db54cfc8082c05068421f7c_name_4906476_87650D6E6A874298AF0F8AA2E7285841_200518_4906476_Coronavirus__McDonald___s_announces_nationwide_s_3000\/mobile.m3u8",
+  "messages" : [
+    {
+      "errorComment" : "Non-canonical language subtag in language tag",
+      "errorDomain" : "ValidatorErrorDomain",
+      "errorReferenceDataID" : 1,
+      "errorStatusCode" : -50048,
+      "errorRequirementLevel" : 2,
+      "errorDetail" : "Unicode language: 'en', Language tag: 'eng'"
+    }
+  ],
+  "validatorVersion" : "1.2(170822)",
+  "sslHosts" : {
+    "https:\/\/d3rtz3mdbmjoag.cloudfront.net" : {
+      "sslNegotiatedProtocolVersion" : 8,
+      "sslNegotiatedCipher" : 49199,
+      "sslRSAKeySizeInBits" : 2048
+    }
+  },
+  "sslContentDeliveredSecurely" : true,
+  "playlistKind" : "master",
+  "variants" : [
+    {
+      "playlistType" : "VOD",
+      "maxFrameRate" : 29.969999999999999,
+      "videoRangeKey" : "Unknown",
+      "processedSegmentsCount" : 8,
+      "url" : "low_640x360-730-v4.m3u8",
+      "hasDiscSequenceTag" : false,
+      "measuredMeanBitrate" : 1212905,
+      "parsedSegmentsCount" : 8,
+      "playlistMeanBitrate" : 1349559,
+      "hasEndTag" : true,
+      "playlistCodecs" : "avc1.4d401f,mp4a.40.2",
+      "playlistResolutionHeight" : 360,
+      "measuredMaxBitrate" : 1799741,
+      "independentSegments" : false,
+      "audioGroup" : {
+        "playlistGroupID" : "audio-1",
+        "renditions" : [
+          {
+            "url" : "low_audio-128-v4.m3u8",
+            "persistentID" : 0
+          }
+        ]
+      },
+      "closedCaptionGroup" : {
+        "playlistGroupID" : "CC",
+        "renditions" : [
+          {
+            "persistentID" : 1
+          }
+        ]
+      },
+      "iframeOnly" : false,
+      "playlistKind" : "media",
+      "playlistMaxBitrate" : 1940541,
+      "sslContentDeliveredSecurely" : true,
+      "discontinuities" : [
+        {
+          "segments" : [
+            {
+              "discontinuityDomain" : 0,
+              "segmentByteRangeLength" : 0,
+              "format" : "transport",
+              "url" : "low_640x360-730-v4_00001.ts",
+              "dataID" : 29,
+              "videoFrameRate" : 29.970029970029969,
+              "videoStartsWithIDR" : true,
+              "segmentDurationTag" : 6.0060000000000002,
+              "mediaSequence" : 1,
+              "sslContentDeliveredSecurely" : true,
+              "segmentByteRangeOffset" : 0
+            },
+            {
+              "discontinuityDomain" : 0,
+              "segmentByteRangeLength" : 0,
+              "format" : "transport",
+              "url" : "low_640x360-730-v4_00002.ts",
+              "dataID" : 30,
+              "videoFrameRate" : 29.970029970029969,
+              "videoStartsWithIDR" : true,
+              "segmentDurationTag" : 6.0060000000000002,
+              "mediaSequence" : 2,
+              "sslContentDeliveredSecurely" : true,
+              "segmentByteRangeOffset" : 0
+            },
+            {
+              "discontinuityDomain" : 0,
+              "segmentByteRangeLength" : 0,
+              "format" : "transport",
+              "url" : "low_640x360-730-v4_00003.ts",
+              "dataID" : 31,
+              "videoFrameRate" : 29.970029970029969,
+              "videoStartsWithIDR" : true,
+              "segmentDurationTag" : 6.0060000000000002,
+              "mediaSequence" : 3,
+              "sslContentDeliveredSecurely" : true,
+              "segmentByteRangeOffset" : 0
+            },
+            {
+              "discontinuityDomain" : 0,
+              "segmentByteRangeLength" : 0,
+              "format" : "transport",
+              "url" : "low_640x360-730-v4_00004.ts",
+              "dataID" : 32,
+              "videoFrameRate" : 29.970029970029969,
+              "videoStartsWithIDR" : true,
+              "segmentDurationTag" : 6.0060000000000002,
+              "mediaSequence" : 4,
+              "sslContentDeliveredSecurely" : true,
+              "segmentByteRangeOffset" : 0
+            },
+            {
+              "discontinuityDomain" : 0,
+              "segmentByteRangeLength" : 0,
+              "format" : "transport",
+              "url" : "low_640x360-730-v4_00005.ts",
+              "dataID" : 33,
+              "videoFrameRate" : 29.970029970029969,
+              "videoStartsWithIDR" : true,
+              "segmentDurationTag" : 6.0060000000000002,
+              "mediaSequence" : 5,
+              "sslContentDeliveredSecurely" : true,
+              "segmentByteRangeOffset" : 0
+            },
+            {
+              "discontinuityDomain" : 0,
+              "segmentByteRangeLength" : 0,
+              "format" : "transport",
+              "url" : "low_640x360-730-v4_00006.ts",
+              "dataID" : 34,
+              "videoFrameRate" : 29.970029970029969,
+              "videoStartsWithIDR" : true,
+              "segmentDurationTag" : 6.0060000000000002,
+              "mediaSequence" : 6,
+              "sslContentDeliveredSecurely" : true,
+              "segmentByteRangeOffset" : 0
+            },
+            {
+              "discontinuityDomain" : 0,
+              "segmentByteRangeLength" : 0,
+              "format" : "transport",
+              "url" : "low_640x360-730-v4_00007.ts",
+              "dataID" : 35,
+              "videoFrameRate" : 29.970029970029969,
+              "videoStartsWithIDR" : true,
+              "segmentDurationTag" : 6.0060000000000002,
+              "mediaSequence" : 7,
+              "sslContentDeliveredSecurely" : true,
+              "segmentByteRangeOffset" : 0
+            },
+            {
+              "discontinuityDomain" : 0,
+              "segmentByteRangeLength" : 0,
+              "format" : "transport",
+              "url" : "low_640x360-730-v4_00008.ts",
+              "dataID" : 36,
+              "videoFrameRate" : 29.970029970029969,
+              "videoStartsWithIDR" : true,
+              "segmentDurationTag" : 3.27,
+              "mediaSequence" : 8,
+              "sslContentDeliveredSecurely" : true,
+              "segmentByteRangeOffset" : 0
+            }
+          ],
+          "measurements" : {
+            "measuredMaxBitrate" : 1799741.5917415917,
+            "measuredMeanBitrate" : 1212905.3672316384
+          },
+          "tracks" : [
+            {
+              "trackVideoIDRStandardDeviation" : 0,
+              "trackId" : 1,
+              "trackVideoWidth" : 640,
+              "trackVideoLevel" : 31,
+              "trackVideoHeight" : 360,
+              "trackMediaType" : "vide",
+              "trackVideoIDRInterval" : 3.0030000000000001,
+              "trackVideoIsInterlaced" : false,
+              "trackVideoProfile" : 77,
+              "trackMediaSubType" : "avc1"
+            }
+          ]
+        }
+      ],
+      "playlistResolutionWidth" : 640,
+      "playlistTargetDuration" : 7,
+      "gzipEncoded" : false,
+      "dataID" : 2
+    },
+    {
+      "playlistType" : "VOD",
+      "videoRangeKey" : "Unknown",
+      "processedSegmentsCount" : 16,
+      "url" : "low_640x360-730-v4_I-Frame.m3u8",
+      "hasDiscSequenceTag" : false,
+      "measuredMeanBitrate" : 143296,
+      "parsedSegmentsCount" : 16,
+      "playlistMeanBitrate" : 143296,
+      "hasEndTag" : true,
+      "playlistCodecs" : "avc1.4d401f",
+      "playlistResolutionHeight" : 360,
+      "measuredMaxBitrate" : 195967,
+      "independentSegments" : false,
+      "closedCaptionGroup" : {
+        "playlistGroupID" : "CC",
+        "renditions" : [
+          {
+            "persistentID" : 1
+          }
+        ]
+      },
+      "iframeOnly" : true,
+      "playlistKind" : "media",
+      "playlistMaxBitrate" : 195967,
+      "sslContentDeliveredSecurely" : true,
+      "discontinuities" : [
+        {
+          "segments" : [
+            {
+              "discontinuityDomain" : 0,
+              "segmentByteRangeLength" : 36096,
+              "format" : "transport",
+              "url" : "low_640x360-730-v4_00001.ts",
+              "dataID" : 4,
+              "videoStartsWithIDR" : true,
+              "segmentDurationTag" : 3.0030000000000001,
+              "mediaSequence" : 1,
+              "sslContentDeliveredSecurely" : true,
+              "segmentByteRangeOffset" : 376
+            },
+            {
+              "discontinuityDomain" : 0,
+              "segmentByteRangeLength" : 50760,
+              "format" : "transport",
+              "url" : "low_640x360-730-v4_00001.ts",
+              "dataID" : 6,
+              "videoStartsWithIDR" : true,
+              "segmentDurationTag" : 3.0030000000000001,
+              "mediaSequence" : 2,
+              "sslContentDeliveredSecurely" : true,
+              "segmentByteRangeOffset" : 679056
+            },
+            {
+              "discontinuityDomain" : 0,
+              "segmentByteRangeLength" : 66176,
+              "format" : "transport",
+              "url" : "low_640x360-730-v4_00002.ts",
+              "dataID" : 7,
+              "videoStartsWithIDR" : true,
+              "segmentDurationTag" : 3.0030000000000001,
+              "mediaSequence" : 3,
+              "sslContentDeliveredSecurely" : true,
+              "segmentByteRangeOffset" : 376
+            },
+            {
+              "discontinuityDomain" : 0,
+              "segmentByteRangeLength" : 41924,
+              "format" : "transport",
+              "url" : "low_640x360-730-v4_00002.ts",
+              "dataID" : 8,
+              "videoStartsWithIDR" : true,
+              "segmentDurationTag" : 3.0030000000000001,
+              "mediaSequence" : 4,
+              "sslContentDeliveredSecurely" : true,
+              "segmentByteRangeOffset" : 545012
+            },
+            {
+              "discontinuityDomain" : 0,
+              "segmentByteRangeLength" : 61852,
+              "format" : "transport",
+              "url" : "low_640x360-730-v4_00003.ts",
+              "dataID" : 9,
+              "videoStartsWithIDR" : true,
+              "segmentDurationTag" : 3.0030000000000001,
+              "mediaSequence" : 5,
+              "sslContentDeliveredSecurely" : true,
+              "segmentByteRangeOffset" : 376
+            },
+            {
+              "discontinuityDomain" : 0,
+              "segmentByteRangeLength" : 16544,
+              "format" : "transport",
+              "url" : "low_640x360-730-v4_00003.ts",
+              "dataID" : 10,
+              "videoStartsWithIDR" : true,
+              "segmentDurationTag" : 3.0030000000000001,
+              "mediaSequence" : 6,
+              "sslContentDeliveredSecurely" : true,
+              "segmentByteRangeOffset" : 556668
+            },
+            {
+              "discontinuityDomain" : 0,
+              "segmentByteRangeLength" : 45120,
+              "format" : "transport",
+              "url" : "low_640x360-730-v4_00004.ts",
+              "dataID" : 11,
+              "videoStartsWithIDR" : true,
+              "segmentDurationTag" : 3.0030000000000001,
+              "mediaSequence" : 7,
+              "sslContentDeliveredSecurely" : true,
+              "segmentByteRangeOffset" : 376
+            },
+            {
+              "discontinuityDomain" : 0,
+              "segmentByteRangeLength" : 41548,
+              "format" : "transport",
+              "url" : "low_640x360-730-v4_00004.ts",
+              "dataID" : 12,
+              "videoStartsWithIDR" : true,
+              "segmentDurationTag" : 3.0030000000000001,
+              "mediaSequence" : 8,
+              "sslContentDeliveredSecurely" : true,
+              "segmentByteRangeOffset" : 423564
+            },
+            {
+              "discontinuityDomain" : 0,
+              "segmentByteRangeLength" : 50572,
+              "format" : "transport",
+              "url" : "low_640x360-730-v4_00005.ts",
+              "dataID" : 13,
+              "videoStartsWithIDR" : true,
+              "segmentDurationTag" : 3.0030000000000001,
+              "mediaSequence" : 9,
+              "sslContentDeliveredSecurely" : true,
+              "segmentByteRangeOffset" : 376
+            },
+            {
+              "discontinuityDomain" : 0,
+              "segmentByteRangeLength" : 55084,
+              "format" : "transport",
+              "url" : "low_640x360-730-v4_00005.ts",
+              "dataID" : 14,
+              "videoStartsWithIDR" : true,
+              "segmentDurationTag" : 3.0030000000000001,
+              "mediaSequence" : 10,
+              "sslContentDeliveredSecurely" : true,
+              "segmentByteRangeOffset" : 389536
+            },
+            {
+              "discontinuityDomain" : 0,
+              "segmentByteRangeLength" : 66364,
+              "format" : "transport",
+              "url" : "low_640x360-730-v4_00006.ts",
+              "dataID" : 15,
+              "videoStartsWithIDR" : true,
+              "segmentDurationTag" : 3.0030000000000001,
+              "mediaSequence" : 11,
+              "sslContentDeliveredSecurely" : true,
+              "segmentByteRangeOffset" : 376
+            },
+            {
+              "discontinuityDomain" : 0,
+              "segmentByteRangeLength" : 58280,
+              "format" : "transport",
+              "url" : "low_640x360-730-v4_00006.ts",
+              "dataID" : 16,
+              "videoStartsWithIDR" : true,
+              "segmentDurationTag" : 3.0030000000000001,
+              "mediaSequence" : 12,
+              "sslContentDeliveredSecurely" : true,
+              "segmentByteRangeOffset" : 366788
+            },
+            {
+              "discontinuityDomain" : 0,
+              "segmentByteRangeLength" : 67868,
+              "format" : "transport",
+              "url" : "low_640x360-730-v4_00007.ts",
+              "dataID" : 17,
+              "videoStartsWithIDR" : true,
+              "segmentDurationTag" : 3.0030000000000001,
+              "mediaSequence" : 13,
+              "sslContentDeliveredSecurely" : true,
+              "segmentByteRangeOffset" : 376
+            },
+            {
+              "discontinuityDomain" : 0,
+              "segmentByteRangeLength" : 51136,
+              "format" : "transport",
+              "url" : "low_640x360-730-v4_00007.ts",
+              "dataID" : 18,
+              "videoStartsWithIDR" : true,
+              "segmentDurationTag" : 3.0030000000000001,
+              "mediaSequence" : 14,
+              "sslContentDeliveredSecurely" : true,
+              "segmentByteRangeOffset" : 399500
+            },
+            {
+              "discontinuityDomain" : 0,
+              "segmentByteRangeLength" : 58092,
+              "format" : "transport",
+              "url" : "low_640x360-730-v4_00008.ts",
+              "dataID" : 19,
+              "videoStartsWithIDR" : true,
+              "segmentDurationTag" : 3.0030000000000001,
+              "mediaSequence" : 15,
+              "sslContentDeliveredSecurely" : true,
+              "segmentByteRangeOffset" : 376
+            },
+            {
+              "discontinuityDomain" : 0,
+              "segmentByteRangeLength" : 43616,
+              "format" : "transport",
+              "url" : "low_640x360-730-v4_00008.ts",
+              "dataID" : 20,
+              "videoStartsWithIDR" : true,
+              "segmentDurationTag" : 0.233567,
+              "mediaSequence" : 16,
+              "sslContentDeliveredSecurely" : true,
+              "segmentByteRangeOffset" : 444620
+            }
+          ],
+          "measurements" : {
+            "measuredMaxBitrate" : 195967.44453581475,
+            "measuredMeanBitrate" : 143296.40776838188
+          },
+          "tracks" : [
+            {
+              "trackVideoIDRStandardDeviation" : 0,
+              "trackId" : 1,
+              "trackVideoWidth" : 640,
+              "trackVideoLevel" : 31,
+              "trackVideoHeight" : 360,
+              "trackMediaType" : "vide",
+              "trackVideoIDRInterval" : 3.0030000000000001,
+              "trackVideoIsInterlaced" : false,
+              "trackVideoProfile" : 77,
+              "trackMediaSubType" : "avc1"
+            }
+          ]
+        }
+      ],
+      "playlistResolutionWidth" : 640,
+      "playlistTargetDuration" : 7,
+      "gzipEncoded" : false,
+      "dataID" : 3
+    },
+    {
+      "playlistType" : "VOD",
+      "playlistDefault" : true,
+      "processedSegmentsCount" : 8,
+      "url" : "low_audio-128-v4.m3u8",
+      "hasDiscSequenceTag" : false,
+      "measuredMeanBitrate" : 128288,
+      "playlistName" : "Alternate Audio",
+      "playlistLanguage" : "eng",
+      "parsedSegmentsCount" : 8,
+      "persistentID" : 0,
+      "playlistAutoselect" : true,
+      "hasEndTag" : true,
+      "playlistMediaType" : "soun",
+      "isRendition" : true,
+      "playlistGroupID" : "audio-1",
+      "measuredMaxBitrate" : 128617,
+      "independentSegments" : false,
+      "playlistKind" : "media",
+      "sslContentDeliveredSecurely" : true,
+      "discontinuities" : [
+        {
+          "segments" : [
+            {
+              "discontinuityDomain" : 0,
+              "segmentByteRangeLength" : 0,
+              "segmentByteRangeOffset" : 0,
+              "format" : "elementary",
+              "dataID" : 21,
+              "segmentDurationTag" : 6.0599999999999996,
+              "mediaSequence" : 1,
+              "sslContentDeliveredSecurely" : true,
+              "url" : "low_audio-128-v4_00001.aac"
+            },
+            {
+              "discontinuityDomain" : 0,
+              "segmentByteRangeLength" : 0,
+              "segmentByteRangeOffset" : 0,
+              "format" : "elementary",
+              "dataID" : 22,
+              "segmentDurationTag" : 5.9909999999999997,
+              "mediaSequence" : 2,
+              "sslContentDeliveredSecurely" : true,
+              "url" : "low_audio-128-v4_00002.aac"
+            },
+            {
+              "discontinuityDomain" : 0,
+              "segmentByteRangeLength" : 0,
+              "segmentByteRangeOffset" : 0,
+              "format" : "elementary",
+              "dataID" : 23,
+              "segmentDurationTag" : 6.0140000000000002,
+              "mediaSequence" : 3,
+              "sslContentDeliveredSecurely" : true,
+              "url" : "low_audio-128-v4_00003.aac"
+            },
+            {
+              "discontinuityDomain" : 0,
+              "segmentByteRangeLength" : 0,
+              "segmentByteRangeOffset" : 0,
+              "format" : "elementary",
+              "dataID" : 24,
+              "segmentDurationTag" : 6.0140000000000002,
+              "mediaSequence" : 4,
+              "sslContentDeliveredSecurely" : true,
+              "url" : "low_audio-128-v4_00004.aac"
+            },
+            {
+              "discontinuityDomain" : 0,
+              "segmentByteRangeLength" : 0,
+              "segmentByteRangeOffset" : 0,
+              "format" : "elementary",
+              "dataID" : 25,
+              "segmentDurationTag" : 5.9909999999999997,
+              "mediaSequence" : 5,
+              "sslContentDeliveredSecurely" : true,
+              "url" : "low_audio-128-v4_00005.aac"
+            },
+            {
+              "discontinuityDomain" : 0,
+              "segmentByteRangeLength" : 0,
+              "segmentByteRangeOffset" : 0,
+              "format" : "elementary",
+              "dataID" : 26,
+              "segmentDurationTag" : 6.0140000000000002,
+              "mediaSequence" : 6,
+              "sslContentDeliveredSecurely" : true,
+              "url" : "low_audio-128-v4_00006.aac"
+            },
+            {
+              "discontinuityDomain" : 0,
+              "segmentByteRangeLength" : 0,
+              "segmentByteRangeOffset" : 0,
+              "format" : "elementary",
+              "dataID" : 27,
+              "segmentDurationTag" : 6.0140000000000002,
+              "mediaSequence" : 7,
+              "sslContentDeliveredSecurely" : true,
+              "url" : "low_audio-128-v4_00007.aac"
+            },
+            {
+              "discontinuityDomain" : 0,
+              "segmentByteRangeLength" : 0,
+              "segmentByteRangeOffset" : 0,
+              "format" : "elementary",
+              "dataID" : 28,
+              "segmentDurationTag" : 3.2040000000000002,
+              "mediaSequence" : 8,
+              "sslContentDeliveredSecurely" : true,
+              "url" : "low_audio-128-v4_00008.aac"
+            }
+          ],
+          "measurements" : {
+            "measuredMaxBitrate" : 128617.82178217823,
+            "measuredMeanBitrate" : 128288.5523817933
+          },
+          "tracks" : [
+            {
+              "trackMediaType" : "soun",
+              "trackAudioChannelCount" : 2,
+              "trackId" : 100,
+              "trackAudioSampleRate" : 44100,
+              "trackMediaSubType" : "aac ",
+              "trackAudioChannelLayout" : "Stereo (L R)"
+            },
+            {
+              "trackMediaType" : "\u0000\u0000\u0000\u0000",
+              "trackMediaSubType" : "id3 ",
+              "trackId" : 101
+            }
+          ]
+        }
+      ],
+      "playlistTargetDuration" : 7,
+      "gzipEncoded" : false,
+      "dataID" : 1
+    }
+  ],
+  "dataVersion" : 1.1000000000000001
+}

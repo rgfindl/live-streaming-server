@@ -2,15 +2,17 @@ FROM haproxy:2.1
 
 # Install deps
 RUN apt-get update && \
-    apt-get install -y --no-install-recommends python-pip curl unzip cron && \
-    pip install jinja2
+    apt-get install -y --no-install-recommends python-pip curl unzip cron
 RUN curl "https://awscli.amazonaws.com/awscli-exe-linux-x86_64.zip" -o "awscliv2.zip"
 RUN unzip awscliv2.zip
 RUN ./aws/install
+RUN curl -sL https://deb.nodesource.com/setup_10.x | bash -
+RUN apt-get install -y nodejs
 
 # Add HAProxy template
-ADD generate-haproxy.py /generate-haproxy.py
-RUN chmod +x /generate-haproxy.py
+ADD index.js /index.js
+ADD package.json /package.json
+RUN npm install
 
 # Add HAProxy entrypoint
 COPY docker-entrypoint.sh /
@@ -28,7 +30,7 @@ COPY generate-haproxy.sh /
 RUN chmod a+x /generate-haproxy.sh
 
 # Add cron task to reload HAProxy config
-RUN echo "* * * * * /bin/bash /reload-haproxy.sh >>/var/log/cron.log 2>&1\n" >> /etc/cron.d/reload-haproxy-cron
+RUN echo "*/15 * * * * /bin/bash /reload-haproxy.sh >>/var/log/cron.log 2>&1\n" >> /etc/cron.d/reload-haproxy-cron
 RUN crontab /etc/cron.d/reload-haproxy-cron
 
 # Start HAProxy
