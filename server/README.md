@@ -26,10 +26,10 @@ docker build \
 
 ### Tag Version
 ```
-docker tag video-streaming-server 132093761664.dkr.ecr.us-east-1.amazonaws.com/video-streaming-server:1.0.1
+docker tag video-streaming-server 132093761664.dkr.ecr.us-east-1.amazonaws.com/video-streaming-server:1.0.2
 ```
 
 ### Push Image
 ```
-docker push 132093761664.dkr.ecr.us-east-1.amazonaws.com/video-streaming-server:1.0.1
+docker push 132093761664.dkr.ecr.us-east-1.amazonaws.com/video-streaming-server:1.0.2
 ```

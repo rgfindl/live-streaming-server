@@ -24,9 +24,11 @@
   "homepage": "https://github.com/rgfindl/live-streaming-server#readme",
   "dependencies": {
     "aws-sdk": "^2.672.0",
+    "axios": "^0.19.2",
     "chokidar": "^3.4.0",
     "lodash": "^4.17.15",
-    "node-media-server": "https://github.com/rgfindl/Node-Media-Server"
+    "node-media-server": "https://github.com/rgfindl/Node-Media-Server",
+    "redis": "^3.0.2"
   },
   "engines": {
     "node": ">=8.0.0"

@@ -19,7 +19,7 @@ case $1 in
         --capabilities CAPABILITY_NAMED_IAM \
         --parameter-overrides \
         Version=1.0.4 \
-        DesiredCount=0 \
+        DesiredCount=2 \
         ${PROFILE}
         ;;
     *)

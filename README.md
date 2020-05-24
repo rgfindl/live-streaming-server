@@ -5,9 +5,6 @@ Ingest RTMP - Encode into HLS - Live Streaming
 - Move `server` to ECS cluster with some high performance GPU instances.
 - Try this encoding for better performance, `h264_nvenc uses the NVidia hardware assisted H.264 video encoder`
 - Reduce segment length for reduced latency?
-- Add Redis to store [stream name : streaming server ip] mapping.
-- Update live.finbits.io CDN to point to `origin` ALB.
-- Update Origin/Proxy on CloudFormation event???  Too much???
 - Increase `server` EC2 and task memory.  
 - Test
 

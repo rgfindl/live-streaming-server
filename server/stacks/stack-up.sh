@@ -18,8 +18,9 @@ case $1 in
         --stack-name video-streaming-server \
         --capabilities CAPABILITY_NAMED_IAM \
         --parameter-overrides \
-        Version=1.0.1 \
-        DesiredCount=2 \
+        Version=1.0.4 \
+        DesiredCount=1 \
+        RedisStack=video-streaming-redis \
         ${PROFILE}
         ;;
     *)

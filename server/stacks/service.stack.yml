@@ -12,15 +12,10 @@ Parameters:
     Type: String
     Description: ECS Stack Name
 
-  ProxyStack:
-    Default: 'video-streaming-proxy'
+  RedisStack:
+    Default: 'video-streaming-redis'
     Type: String
-    Description: Proxy Stack Name
-
-  OriginStack:
-    Default: 'video-streaming-origin'
-    Type: String
-    Description: Origin Stack Name
+    Description: Redis Stack Name
 
   AssetsStack:
     Default: 'video-streaming-assets'
@@ -112,6 +107,10 @@ Resources:
               Value:
                 Fn::ImportValue:
                   !Sub "${AssetsStack}-AssetsBucket"
+            - Name: CACHE_DOMAIN
+              Value: 
+                Fn::ImportValue:
+                  !Sub "${RedisStack}-Domain"
           LogConfiguration:
             LogDriver: awslogs
             Options:

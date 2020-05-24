@@ -1,8 +1,40 @@
 const NodeMediaServer = require('node-media-server');
+const _ = require('lodash');
 const { join } = require('path');
+const redis = require('redis');
+const { promisify } = require('util');
+const axios = require('axios');
 const fs = require('./lib/fs');
 const hls = require('./lib/hls');
-const _ = require('lodash');
+const ecs = require('./lib/ecs');
+
+const cache = redis.createClient({ host: process.env.CACHE_DOMAIN });
+const cacheSet = promisify(cache.set).bind(cache);
+const cacheDel = promisify(cache.del).bind(cache);
+
+cache.on('error', function(error) {
+  console.error(error);
+});
+
+let SERVER_ADDRESS = '';
+const getServerIpAndPort = async () => {
+  console.log('getServerIpAndPort');
+  try {
+    const containerMetadataResponse = await axios.get(`${process.env.ECS_CONTAINER_METADATA_URI}`);
+    const containerMetadata = containerMetadataResponse.data;
+    console.log(JSON.stringify(containerMetadata));
+    const taskMetadataResponse = await axios.get(`${process.env.ECS_CONTAINER_METADATA_URI}/task`);
+    const taskMetadata = taskMetadataResponse.data;
+    console.log(JSON.stringify(taskMetadata));
+
+    const { TaskARN } = taskMetadata;
+    SERVER_ADDRESS = await ecs.fetchServer(TaskARN);
+    console.log(SERVER_ADDRESS);
+  } catch (err) {
+    console.log(err);
+  }
+};
+getServerIpAndPort();
 
 const publishAuthorizer = (id, publishStreamPath, publishStreamId) => {
   console.log('publishAuthorizer', id, publishStreamPath, publishStreamId);
@@ -225,6 +257,7 @@ nms.on('postPublish', async (id, StreamPath, args) => {
     this.streams.set(name, id);
     try {
       await hls.createAbrPlaylist(config.http.mediaroot, name);
+      await cacheSet(name, SERVER_ADDRESS);
     } catch (err) {
       console.log(err);
     }
@@ -295,6 +328,7 @@ nms.on('donePublish', async (id, StreamPath, args) => {
   console.log('[NodeEvent on donePublish]', `id=${id} StreamPath=${StreamPath} args=${JSON.stringify(args)}`);
   if (StreamPath.indexOf('/hls/') != -1) {
     const name = StreamPath.split('/').pop();
+    await cacheDel(name);
     const timeoutMs = _.isEqual(process.env.NODE_ENV, 'development') ?
       1000 : 
       2 * 60 * 1000;

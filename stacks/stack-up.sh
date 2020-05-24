@@ -24,6 +24,9 @@ case $1 in
         --template-file proxy-dns.stack.yml \
         --stack-name video-streaming-proxy-dns \
         --capabilities CAPABILITY_IAM \
+        --parameter-overrides \
+        Proxy1=3.89.57.137 \
+        Proxy2=52.91.251.36 \
         ${PROFILE}
         ;;
     ecs)
