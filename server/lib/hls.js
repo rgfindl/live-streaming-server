@@ -2,22 +2,27 @@
 const _ = require('lodash');
 const chokidar = require('chokidar');
 const { join } = require('path');
+const EventEmitter = require('events');
 const fs = require('./fs');
 const s3 = require('./s3');
 const m3u8 = require('./m3u8');
 
+const nodeEvent = new EventEmitter();
+
+const on = (eventName, listener) => {
+  nodeEvent.on(eventName, listener);
+};
+
 const VOD_APP_NAME = '720p';
 
-const abrTemplate = () => {
-  let line = `#EXTM3U\n#EXT-X-VERSION:3\n`
-  line += `#EXT-X-STREAM-INF:BANDWIDTH=800000,RESOLUTION=640x360\n360p/index.m3u8\n`
-  line += `#EXT-X-STREAM-INF:BANDWIDTH=1400000,RESOLUTION=842x480\n480p/index.m3u8\n`
-  line += `#EXT-X-STREAM-INF:BANDWIDTH=2800000,RESOLUTION=1280x720\n720p/index.m3u8`
-  return line
+// Function to create a unique VOD filename for each stream
+const getVodName = (streams, streamName) => {
+  if (!streams.has(streamName)) return false;
+  return `vod-${streams.get(streamName)}.m3u8`;
 };
 
 // HLS - test4/720p/index.m3u8
-const handlePlaylist = async (path, mediaRoot, vodName, streamName, appName) => {
+const handlePlaylist = async (path, mediaRoot, streams, streamName, appName) => {
   console.log('handlePlaylist', path);
   if (await fs.exists(join(mediaRoot, path))) {
     // Read 720p playlist
@@ -25,11 +30,15 @@ const handlePlaylist = async (path, mediaRoot, vodName, streamName, appName) => 
 
     // Put /vod.m3u8 with all segments and end tag.
     let vodM3u8;
-    const vodFilename = vodName(streamName);
+    const vodFilename = getVodName(streams, streamName);
     if (vodFilename) {
       const vodPath = join(mediaRoot, streamName, vodFilename);
       if (await fs.exists(vodPath)) {
+        // Read existing vod playlist.
         vodM3u8 = await fs.readFile(vodPath);
+      } else {
+        // New HLS Stream.
+        nodeEvent.emit("newHlsStream", streamName);
       }
       vodM3u8 = m3u8.sync_m3u8(liveM3u8, vodM3u8, appName);
       await fs.writeFile(vodPath, vodM3u8);
@@ -46,7 +55,7 @@ const handlePlaylist = async (path, mediaRoot, vodName, streamName, appName) => 
 };
 
 // TS  - media/test4/720p/20200504-1588591755.ts
-const handleSegment = async (path, mediaRoot, vodName, streamName, appName) => {
+const handleSegment = async (path, mediaRoot) => {
   const params = {
     Body: fs.createReadStream(join(mediaRoot, path)),
     Bucket: process.env.ASSETS_BUCKET,
@@ -62,7 +71,7 @@ const handleSegment = async (path, mediaRoot, vodName, streamName, appName) => {
 // TS  - media/test4/720p/20200504-1588591755.ts
 // [360p, 480p, 720p]
 
-const onFile = async (absolutePath, type, mediaRoot, vodName) => {
+const onFile = async (absolutePath, type, mediaRoot, streams) => {
   try {
     const path = _.trim(_.replace(absolutePath, mediaRoot, ''), '/');
     if (_.endsWith(path, '.ts')) {
@@ -72,16 +81,11 @@ const onFile = async (absolutePath, type, mediaRoot, vodName) => {
       if (_.isEqual(appName, VOD_APP_NAME)) {
         console.log(`File ${path} has been ${type}`);
         // Only upload 720p
-        await handleSegment(
-          path,
-          mediaRoot,
-          vodName,
-          streamName,
-          appName);
+        await handleSegment(path, mediaRoot);
         await handlePlaylist(
           _.join(_.union(_.initial(_.split(path, '/')), ['index.m3u8']), '/'),
           mediaRoot,
-          vodName,
+          streams,
           streamName,
           appName);
       }
@@ -91,13 +95,7 @@ const onFile = async (absolutePath, type, mediaRoot, vodName) => {
   }
 };
 
-const createAbrPlaylist = async (mediaRoot, name) => {
-  console.log('create abr playlist');
-  await fs.mkdir(`${mediaRoot}/${name}`, { recursive: true });
-  await fs.writeFile(`${mediaRoot}/${name}/live.m3u8`, abrTemplate());
-};
-
-const s3Sync = (config, vodName) => {
+const recordHls = (config, streams) => {
   const mediaRoot = config.http.mediaroot;
   console.log(`Start watcher - ${process.env.NODE_ENV}, ${mediaRoot}`);
   chokidar.watch(mediaRoot, {
@@ -107,11 +105,11 @@ const s3Sync = (config, vodName) => {
       stabilityThreshold: 6000,
       pollInterval: 100
     }
-  }).on('add', (path) => onFile(path, 'add', mediaRoot, vodName))
-    .on('change', (path) => onFile(path, 'change', mediaRoot, vodName));
+  }).on('add', (path) => onFile(path, 'add', mediaRoot, streams))
+    .on('change', (path) => onFile(path, 'change', mediaRoot, streams));
 };
 
 module.exports = {
-  s3Sync,
-  createAbrPlaylist
+  recordHls,
+  on
 };
