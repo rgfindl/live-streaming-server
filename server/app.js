@@ -32,7 +32,6 @@ const init = async () => {
       http: {
         port: 8000,
         mediaroot: process.env.MEDIA_ROOT || 'media',
-        webroot: './www',
         allow_origin: '*',
         api: true
       },
@@ -206,7 +205,7 @@ const init = async () => {
     // HLS callbacks
     //
     hls.on('newHlsStream', async (name) => {
-      await abr.createPlaylist(config.http.mediaroot, streamName);
+      await abr.createPlaylist(config.http.mediaroot, name);
       await cache.set(name, SERVER_ADDRESS);
     });
 

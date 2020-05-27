@@ -38,6 +38,7 @@ const handlePlaylist = async (path, mediaRoot, streams, streamName, appName) => 
         vodM3u8 = await fs.readFile(vodPath);
       } else {
         // New HLS Stream.
+        console.log('emit newHlsStream event');
         nodeEvent.emit("newHlsStream", streamName);
       }
       vodM3u8 = m3u8.sync_m3u8(liveM3u8, vodM3u8, appName);

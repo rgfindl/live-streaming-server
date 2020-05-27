@@ -111,6 +111,8 @@ Resources:
               Value: 
                 Fn::ImportValue:
                   !Sub "${RedisStack}-Domain"
+            - Name: MEDIA_ROOT
+              Value: '/usr/src/app/media'
           LogConfiguration:
             LogDriver: awslogs
             Options:

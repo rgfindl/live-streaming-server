@@ -22,10 +22,10 @@ docker build \
 
 ### Tag Version
 ```
-docker tag video-streaming-origin 132093761664.dkr.ecr.us-east-1.amazonaws.com/video-streaming-origin:1.0.2
+docker tag video-streaming-origin 132093761664.dkr.ecr.us-east-1.amazonaws.com/video-streaming-origin:1.0.3
 ```
 
 ### Push Image
 ```
-docker push 132093761664.dkr.ecr.us-east-1.amazonaws.com/video-streaming-origin:1.0.2
+docker push 132093761664.dkr.ecr.us-east-1.amazonaws.com/video-streaming-origin:1.0.3
 ```

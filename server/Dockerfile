@@ -110,6 +110,7 @@ COPY package*.json ./
 RUN yarn install --production
 
 COPY . .
+RUN mkdir ./media
 
 EXPOSE 1935 8000
 
