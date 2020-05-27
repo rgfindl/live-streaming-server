@@ -2,142 +2,119 @@ worker_processes  auto;
 
 error_log /dev/stdout info;
 
-
 events {
-    worker_connections  1024;
+  worker_connections  1024;
 }
 
 http {
-    include       /etc/nginx/mime.types;
-    default_type  application/octet-stream;
+  include       /etc/nginx/mime.types;
+  default_type  application/octet-stream;
 
-    log_format  main  '$remote_addr - $remote_user [$time_local] "$request" '
-                      '$status $body_bytes_sent "$http_referer" '
-                      '"$http_user_agent" "$http_x_forwarded_for"';
+  log_format  main  '$remote_addr - $remote_user [$time_local] "$request" '
+                    '$status $body_bytes_sent "$http_referer" '
+                    '"$http_user_agent" "$http_x_forwarded_for"';
 
-    access_log /dev/stdout main;
+  access_log /dev/stdout main;
 
-    sendfile        on;
+  sendfile        on;
 
-    keepalive_timeout  65;
+  keepalive_timeout  65;
 
-    gzip on;
+  gzip on;
 
-    proxy_cache_path /tmp/cache/ levels=1:2 keys_zone=CONTENTCACHE:10m max_size=15g inactive=240m use_temp_path=off;
+  proxy_cache_path /tmp/cache/ levels=1:2 keys_zone=CONTENTCACHE:10m max_size=15g inactive=240m use_temp_path=off;
 
-    ignore_invalid_headers off;
+  ignore_invalid_headers off;
 
-    upstream node-backend {
-        server localhost:3000 max_fails=0;
+  upstream node-backend {
+      server localhost:3000 max_fails=0;
+  }
+
+  <% servers.forEach(function(server, index) { %>
+  upstream media<%= index %>-backend {
+      server <%= server %> max_fails=0;
+  }
+  <% }); %>
+
+  server {
+    listen 80;
+    server_name localhost;
+    sendfile off;
+
+    location ~ ^/live/(.*live\.m3u8)$ {
+      proxy_pass http://node-backend/live/$1$is_args$args;
+      add_header Cache-Control "max-age=60";
+
+      #
+      # Cache results on local disc
+      #
+      proxy_cache CONTENTCACHE;
+      proxy_cache_lock on;
+      proxy_cache_key $scheme$proxy_host$uri;
+      proxy_cache_valid 1m;
+      proxy_cache_use_stale error timeout invalid_header updating http_500 http_502 http_503 http_504;
+
+      #
+      # CORS
+      #
+      include /etc/nginx/nginx.cors.conf;
+    }
+
+    location ~ ^/live/(.*index\.m3u8)$ {
+      proxy_pass http://node-backend/live/$1$is_args$args;
+      add_header Cache-Control "no-cache";
+
+      #
+      # Cache results on local disc
+      #
+      proxy_cache CONTENTCACHE;
+      proxy_cache_lock on;
+      proxy_cache_key $scheme$proxy_host$uri;
+      proxy_cache_valid 1s;
+      proxy_cache_use_stale error timeout invalid_header updating http_500 http_502 http_503 http_504;
+
+      #
+      # CORS
+      #
+      include /etc/nginx/nginx.cors.conf;
+    }
+
+    location ~ ^/live/(.*\.ts)$ {
+      proxy_pass http://node-backend/live/$1$is_args$args;
+      add_header Cache-Control "max-age=600";
+
+      #
+      # Cache results on local disc
+      #
+      proxy_cache CONTENTCACHE;
+      proxy_cache_lock on;
+      proxy_cache_key $scheme$proxy_host$uri;
+      proxy_cache_valid 60s;
+      proxy_cache_use_stale error timeout invalid_header updating http_500 http_502 http_503 http_504;
+
+      #
+      # CORS
+      #
+      include /etc/nginx/nginx.cors.conf;
     }
 
     <% servers.forEach(function(server, index) { %>
-    upstream media<%= index %>-backend {
-        server <%= server %> max_fails=0;
+    location ~ ^/<%= server %>/live/(.*)$ {
+      internal;
+      proxy_pass http://media<%= index %>-backend/live/$1$is_args$args;
     }
     <% }); %>
 
-    server {
-        listen 80;
-        server_name localhost;
-        sendfile off;
-
-        #
-        # Wide-open CORS config for nginx
-        #
-        location / {
-          if ($request_method = 'OPTIONS') {
-            add_header 'Access-Control-Allow-Origin' '*';
-            add_header 'Access-Control-Allow-Methods' 'GET, POST, OPTIONS';
-            #
-            # Custom headers and headers various browsers *should* be OK with but aren't
-            #
-            add_header 'Access-Control-Allow-Headers' 'DNT,User-Agent,X-Requested-With,If-Modified-Since,Cache-Control,Content-Type,Range';
-            #
-            # Tell client that this pre-flight info is valid for 20 days
-            #
-            add_header 'Access-Control-Max-Age' 1728000;
-            add_header 'Content-Type' 'text/plain; charset=utf-8';
-            add_header 'Content-Length' 0;
-            return 204;
-          }
-          if ($request_method = 'POST') {
-            add_header 'Access-Control-Allow-Origin' '*';
-            add_header 'Access-Control-Allow-Methods' 'GET, POST, OPTIONS';
-            add_header 'Access-Control-Allow-Headers' 'DNT,User-Agent,X-Requested-With,If-Modified-Since,Cache-Control,Content-Type,Range';
-            add_header 'Access-Control-Expose-Headers' 'Content-Length,Content-Range';
-          }
-          if ($request_method = 'GET') {
-            add_header 'Access-Control-Allow-Origin' '*';
-            add_header 'Access-Control-Allow-Methods' 'GET, POST, OPTIONS';
-            add_header 'Access-Control-Allow-Headers' 'DNT,User-Agent,X-Requested-With,If-Modified-Since,Cache-Control,Content-Type,Range';
-            add_header 'Access-Control-Expose-Headers' 'Content-Length,Content-Range';
-          }
-        }
-
-        location ~ ^/live/(.*live\.m3u8)$ {
-            proxy_pass http://node-backend/live/$1$is_args$args;
-            expires: 60;
-
-            #
-            # Cache results on local disc
-            #
-            proxy_cache CONTENTCACHE;
-            proxy_cache_lock on;
-            proxy_cache_key $scheme$proxy_host$uri;
-            proxy_cache_valid 1m;
-            proxy_cache_use_stale error timeout invalid_header updating http_500 http_502 http_503 http_504;
-        }
-
-        location ~ ^/live/(.*index\.m3u8)$ {
-            proxy_pass http://node-backend/live/$1$is_args$args;
-            expires: -1;
-
-            #
-            # Cache results on local disc
-            #
-            proxy_cache CONTENTCACHE;
-            proxy_cache_lock on;
-            proxy_cache_key $scheme$proxy_host$uri;
-            proxy_cache_valid 1s;
-            proxy_cache_use_stale error timeout invalid_header updating http_500 http_502 http_503 http_504;
-        }
-
-        location ~ ^/live/(.*\.ts)$ {
-            proxy_pass http://node-backend/live/$1$is_args$args;
-
-            #
-            # Cache results on local disc
-            #
-            proxy_cache CONTENTCACHE;
-            proxy_cache_lock on;
-            proxy_cache_key $scheme$proxy_host$uri;
-            proxy_cache_valid 60s;
-            proxy_cache_use_stale error timeout invalid_header updating http_500 http_502 http_503 http_504;
-        }
-
-        <% servers.forEach(function(server, index) { %>
-        location ~ ^/<%= server %>/live/(.*)$ {
-            internal;
-            proxy_pass http://media<%= index %>-backend/live/$1$is_args$args;
-        }
-        <% }); %>
-
-        location ^/healthcheck$ {
-            proxy_pass http://node-backend/healthcheck$is_args$args;
-        }
-
-        location /nginx_status {
-            stub_status on;
-
-            access_log off;
-            allow 127.0.0.1;
-            deny all;
-        }
-
-        location / {
-            proxy_pass http://node-backend/;
-        }
-
+    location /healthcheck {
+      proxy_pass http://node-backend/healthcheck$is_args$args;
     }
+
+    location /nginx_status {
+      stub_status on;
+
+      access_log off;
+      allow 127.0.0.1;
+      deny all;
+    }
+  }
 }

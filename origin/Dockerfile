@@ -11,7 +11,8 @@ RUN apt-get install -y nodejs
 
 # Add NGINX template
 ADD index.js /index.js
-ADD server.js /server.js
+RUN mkdir /server
+COPY server/. /server
 ADD package.json /package.json
 RUN npm install
 
@@ -22,6 +23,7 @@ ENTRYPOINT ["/docker-entrypoint.sh"]
 
 # Copy configs
 COPY nginx.conf.template /etc/nginx/nginx.conf.template
+COPY nginx.cors.conf /etc/nginx/nginx.cors.conf
 
 # Copy scripts
 COPY reload-nginx.sh /

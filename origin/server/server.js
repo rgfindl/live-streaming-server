@@ -1,17 +1,9 @@
 const express = require('express');
-const redis = require('redis');
-const { promisify } = require('util');
+const cache = require('./cache');
 const _ = require('lodash');
 
 const app = express();
 const port = 3000;
-
-const cache = redis.createClient({ host: process.env.CACHE_DOMAIN });
-const cacheGet = promisify(cache.get).bind(cache);
-
-cache.on('error', function(error) {
-  console.error(error);
-});
 
 app.get('/healthcheck', async (req, res) => {
   return res.status(200).send('healthy');
@@ -31,7 +23,7 @@ app.get('/*', async (req, res) => {
 
   // Validate stream.
   const streamName = _.nth(pathParts, 1);
-  const serverAddress = await cacheGet(streamName);
+  const serverAddress = await cache.get(streamName);
   console.log(streamName, serverAddress);
   if (_.isNil(serverAddress)) {
     return res.status(404).send(`${streamName} doesn't exist.`);
