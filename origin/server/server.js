@@ -10,23 +10,15 @@ app.get('/healthcheck', async (req, res) => {
 });
 
 app.get('/*', async (req, res) => {
-  console.log(req.path)
-
-  // Validate the request.
-  const pathParts = _.split(_.trim(req.path, '/'), '/');
-  if (_.size(pathParts) < 3) {
-    return res.status(400).send('Invalid request');
-  }
-  if (!_.isEqual(_.first(pathParts), 'live')) {
-    return res.status(400).send('Invalid request');
-  }
+  console.log(req.path);
 
   // Validate stream.
-  const streamName = _.nth(pathParts, 1);
+  const pathParts = _.split(_.trim(req.path, '/'), '/');
+  const streamName = _.nth(pathParts, 0);
   const serverAddress = await cache.get(streamName);
   console.log(streamName, serverAddress);
   if (_.isNil(serverAddress)) {
-    return res.status(404).send(`${streamName} doesn't exist.`);
+    return res.status(404).send(`${streamName} is not streaming live now`);
   }
 
   const internalRedirect = `/${_.join(_.concat([serverAddress], pathParts), '/')}`;

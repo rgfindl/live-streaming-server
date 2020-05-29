@@ -30,7 +30,7 @@ COPY generate-haproxy.sh /
 RUN chmod a+x /generate-haproxy.sh
 
 # Add cron task to reload HAProxy config
-RUN echo "* * * * * /bin/bash /reload-haproxy.sh >>/var/log/cron.log 2>&1\n" >> /etc/cron.d/reload-haproxy-cron
+RUN echo "* * * * * /bin/bash /reload-haproxy.sh > /proc/1/fd/1 2>/proc/1/fd/2\n" >> /etc/cron.d/reload-haproxy-cron
 RUN crontab /etc/cron.d/reload-haproxy-cron
 
 # Start HAProxy

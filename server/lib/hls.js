@@ -102,6 +102,7 @@ const recordHls = (config, streams) => {
   chokidar.watch(mediaRoot, {
     ignored: /(^|[\/\\])\../, // ignore dotfiles
     persistent: true,
+    ignoreInitial: true,
     awaitWriteFinish: {
       stabilityThreshold: 6000,
       pollInterval: 100

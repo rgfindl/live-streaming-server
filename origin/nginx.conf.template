@@ -41,8 +41,15 @@ http {
     server_name localhost;
     sendfile off;
 
-    location ~ ^/live/(.*live\.m3u8)$ {
-      proxy_pass http://node-backend/live/$1$is_args$args;
+    <% servers.forEach(function(server, index) { %>
+    location ~ ^/<%= server %>/(.*)$ {
+      internal;
+      proxy_pass http://media<%= index %>-backend/$1$is_args$args;
+    }
+    <% }); %>
+
+    location ~ ^/(.*live\.m3u8)$ {
+      proxy_pass http://node-backend/$1$is_args$args;
       add_header Cache-Control "max-age=60";
 
       #
@@ -60,8 +67,8 @@ http {
       include /etc/nginx/nginx.cors.conf;
     }
 
-    location ~ ^/live/(.*index\.m3u8)$ {
-      proxy_pass http://node-backend/live/$1$is_args$args;
+    location ~ ^/(.*index\.m3u8)$ {
+      proxy_pass http://node-backend/$1$is_args$args;
       add_header Cache-Control "no-cache";
 
       #
@@ -79,8 +86,8 @@ http {
       include /etc/nginx/nginx.cors.conf;
     }
 
-    location ~ ^/live/(.*\.ts)$ {
-      proxy_pass http://node-backend/live/$1$is_args$args;
+    location ~ ^/(.*\.ts)$ {
+      proxy_pass http://node-backend/$1$is_args$args;
       add_header Cache-Control "max-age=600";
 
       #
@@ -97,13 +104,6 @@ http {
       #
       include /etc/nginx/nginx.cors.conf;
     }
-
-    <% servers.forEach(function(server, index) { %>
-    location ~ ^/<%= server %>/live/(.*)$ {
-      internal;
-      proxy_pass http://media<%= index %>-backend/live/$1$is_args$args;
-    }
-    <% }); %>
 
     location /healthcheck {
       proxy_pass http://node-backend/healthcheck$is_args$args;

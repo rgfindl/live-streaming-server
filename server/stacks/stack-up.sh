@@ -18,7 +18,7 @@ case $1 in
         --stack-name video-streaming-server \
         --capabilities CAPABILITY_NAMED_IAM \
         --parameter-overrides \
-        Version=1.0.7 \
+        Version=1.0.9 \
         DesiredCount=0 \
         RedisStack=video-streaming-redis \
         TaskMemory=15000 \

@@ -6,8 +6,8 @@ services:
     volumes:
       - ./media:/usr/src/app/media
     ports:
-      - 8001-8002:8000
-      - 1936-1937:1935
+      - 8001:8000
+      - 1936:1935
     environment:
       FFMPEG_PATH: /usr/local/bin/ffmpeg
       ASSETS_BUCKET: video-streaming-assets-assetsbucket-b7h0zjs5w8ry
@@ -15,6 +15,7 @@ services:
       AWS_ACCESS_KEY_ID: ${AWS_ACCESS_KEY_ID}
       AWS_SECRET_ACCESS_KEY: ${AWS_SECRET_ACCESS_KEY}
       CACHE_DOMAIN: redis
+      NODE_ENV: development
     links:
       - redis
   redis:

@@ -17,7 +17,7 @@ const init = async () => {
   try {
     // Fetch the container server address (IP:PORT)
     // The IP is from the EC2 server.  The PORT is from the container.
-    const SERVER_ADDRESS = process.env === 'production' ? await ecs.getServer() : '';
+    const SERVER_ADDRESS = process.env.NODE_ENV === 'production' ? await ecs.getServer() : '';
 
     // Set the Node-Media-Server config.
     const config = {
@@ -62,9 +62,9 @@ const init = async () => {
               '-ar',
               '48000',
               '-c:v',
-              'h264',
-              '-tune',
-              'zerolatency',
+              'libx264',
+              '-preset',
+              'veryfast',
               '-profile:v',
               'main',
               '-crf',
@@ -103,9 +103,9 @@ const init = async () => {
               '-ar',
               '48000',
               '-c:v',
-              'h264',
-              '-tune',
-              'zerolatency',
+              'libx264',
+              '-preset',
+              'veryfast',
               '-profile:v',
               'main',
               '-crf',
@@ -144,9 +144,9 @@ const init = async () => {
               '-ar',
               '48000',
               '-c:v',
-              'h264',
-              '-tune',
-              'zerolatency',
+              'libx264',
+              '-preset',
+              'veryfast',
               '-profile:v',
               'main',
               '-crf',

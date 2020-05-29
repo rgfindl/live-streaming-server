@@ -32,7 +32,7 @@ COPY generate-nginx.sh /
 RUN chmod a+x /generate-nginx.sh
 
 # Add cron task to reload NGINX config
-RUN echo "* * * * * /bin/bash /reload-nginx.sh >>/var/log/cron.log 2>&1\n" >> /etc/cron.d/reload-nginx-cron
+RUN echo "* * * * * /bin/bash /reload-nginx.sh > /proc/1/fd/1 2>/proc/1/fd/2\n" >> /etc/cron.d/reload-nginx-cron
 RUN crontab /etc/cron.d/reload-nginx-cron
 
 # Configure app
