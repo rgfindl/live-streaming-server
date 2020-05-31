@@ -29,3 +29,11 @@ docker tag video-streaming-proxy 132093761664.dkr.ecr.us-east-1.amazonaws.com/vi
 ```
 docker push 132093761664.dkr.ecr.us-east-1.amazonaws.com/video-streaming-proxy:1.0.7
 ```
+
+### All
+```
+docker build \
+-t video-streaming-proxy .
+docker tag video-streaming-proxy 132093761664.dkr.ecr.us-east-1.amazonaws.com/video-streaming-proxy:1.0.8
+docker push 132093761664.dkr.ecr.us-east-1.amazonaws.com/video-streaming-proxy:1.0.8
+```

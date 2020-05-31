@@ -18,8 +18,8 @@ case $1 in
         --stack-name video-streaming-proxy \
         --capabilities CAPABILITY_NAMED_IAM \
         --parameter-overrides \
-        Version=1.0.7 \
-        DesiredCount=0 \
+        Version=1.0.8 \
+        DesiredCount=1 \
         ${PROFILE}
         ;;
     *)

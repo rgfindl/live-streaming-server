@@ -18,8 +18,8 @@ case $1 in
         --stack-name video-streaming-origin \
         --capabilities CAPABILITY_NAMED_IAM \
         --parameter-overrides \
-        Version=1.0.9 \
-        DesiredCount=0 \
+        Version=1.0.10 \
+        DesiredCount=1 \
         Domain=live.finbits.io \
         ${PROFILE}
         ;;

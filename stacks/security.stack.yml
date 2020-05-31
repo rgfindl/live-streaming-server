@@ -11,34 +11,6 @@ Parameters:
 Resources:
 
   #
-  # ECS/EC2
-  #
-
-  ECSHostSecurityGroup:
-    Type: AWS::EC2::SecurityGroup
-    Properties:
-      GroupDescription: Access to the ECS hosts and the tasks/containers that run on them
-      VpcId:
-        Fn::ImportValue:
-          !Sub '${VPCStack}-VPCID'
-
-  ECSHostSecurityGroupIngressProxy:
-    Type: AWS::EC2::SecurityGroupIngress
-    Properties:
-      Description: Access to the Server from the Proxy
-      GroupId: !Ref ECSHostSecurityGroup
-      SourceSecurityGroupId: !Ref ProxyContainerSecurityGroup
-      IpProtocol: -1
-
-  ECSHostSecurityGroupIngressOrigin:
-    Type: AWS::EC2::SecurityGroupIngress
-    Properties:
-      Description: Access to the Server from the Origin
-      GroupId: !Ref ECSHostSecurityGroup
-      SourceSecurityGroupId: !Ref OriginContainerSecurityGroup
-      IpProtocol: -1
-
-  #
   # Redis
   #
 
@@ -63,7 +35,35 @@ Resources:
     Properties:
       Description: Access to Redis from the Server
       GroupId: !Ref RedisSecurityGroup
-      SourceSecurityGroupId: !Ref ECSHostSecurityGroup
+      SourceSecurityGroupId: !Ref ServerContainerSecurityGroup
+      IpProtocol: -1
+
+  #
+  # Server
+  #
+
+  ServerContainerSecurityGroup:
+    Type: AWS::EC2::SecurityGroup
+    Properties:
+      GroupDescription: Access to the Server containers
+      VpcId:
+        Fn::ImportValue:
+          !Sub "${VPCStack}-VPCID"
+
+  ServerSecurityGroupIngressProxy:
+    Type: AWS::EC2::SecurityGroupIngress
+    Properties:
+      Description: Access to the Server from the Proxy
+      GroupId: !Ref ServerContainerSecurityGroup
+      SourceSecurityGroupId: !Ref ProxyContainerSecurityGroup
+      IpProtocol: -1
+
+  ServerSecurityGroupIngressOrigin:
+    Type: AWS::EC2::SecurityGroupIngress
+    Properties:
+      Description: Access to the Server from the Origin
+      GroupId: !Ref ServerContainerSecurityGroup
+      SourceSecurityGroupId: !Ref OriginContainerSecurityGroup
       IpProtocol: -1
 
   #
@@ -118,10 +118,6 @@ Resources:
           CidrIp: 0.0.0.0/0
 
 Outputs:
-  ECSHostSecurityGroup:
-    Value: !Ref 'ECSHostSecurityGroup'
-    Export:
-      Name: !Sub '${AWS::StackName}-ECSHostSecurityGroup'
   RedisSecurityGroup:
     Value: !Ref 'RedisSecurityGroup'
     Export:
@@ -138,3 +134,7 @@ Outputs:
     Value: !Ref 'ProxyContainerSecurityGroup'
     Export:
       Name: !Sub '${AWS::StackName}-ProxyContainerSecurityGroup'
+  ServerContainerSecurityGroup:
+    Value: !Ref 'ServerContainerSecurityGroup'
+    Export:
+      Name: !Sub '${AWS::StackName}-ServerContainerSecurityGroup'

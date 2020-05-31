@@ -25,8 +25,7 @@ case $1 in
         --stack-name video-streaming-proxy-dns \
         --capabilities CAPABILITY_IAM \
         --parameter-overrides \
-        Proxy1=3.89.57.137 \
-        Proxy2=52.91.251.36 \
+        Proxy1=50.19.45.124 \
         ${PROFILE}
         ;;
     ecs)

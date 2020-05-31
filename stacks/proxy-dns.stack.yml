@@ -16,9 +16,6 @@ Parameters:
   Proxy1:
     Type: String
     Description: Proxy Server 1 IP
-  Proxy2:
-    Type: String
-    Description: Proxy Server 2 IP
 
 Resources:
   
@@ -30,17 +27,8 @@ Resources:
         - Name: !Ref Domain
           Type: 'A'
           TTL: 60
-          SetIdentifier: Proxy One
-          Weight: '50'
           ResourceRecords:
             - !Ref Proxy1
-        - Name: !Ref Domain
-          Type: 'A'
-          TTL: 60
-          SetIdentifier: Proxy Two
-          Weight: '50'
-          ResourceRecords:
-            - !Ref Proxy2
 
 Outputs:
   Domain:

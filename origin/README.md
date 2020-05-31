@@ -34,6 +34,6 @@ docker push 132093761664.dkr.ecr.us-east-1.amazonaws.com/video-streaming-origin:
 ```
 docker build \
 -t video-streaming-origin .
-docker tag video-streaming-origin 132093761664.dkr.ecr.us-east-1.amazonaws.com/video-streaming-origin:1.0.9
-docker push 132093761664.dkr.ecr.us-east-1.amazonaws.com/video-streaming-origin:1.0.9
+docker tag video-streaming-origin 132093761664.dkr.ecr.us-east-1.amazonaws.com/video-streaming-origin:1.0.10
+docker push 132093761664.dkr.ecr.us-east-1.amazonaws.com/video-streaming-origin:1.0.10
 ```
