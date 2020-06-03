@@ -2,11 +2,8 @@
 Ingest RTMP - Encode into HLS - Live Streaming
 
 ## TODO
-- Move `server` to ECS cluster with some high performance GPU instances.
-- Try this encoding for better performance, `h264_nvenc uses the NVidia hardware assisted H.264 video encoder`
 - Reduce segment length for reduced latency?
-- Increase `server` EC2 and task memory.  
-- Test
+- Auto scaling server - cost savings - handle dynamic load
 
 ## Send test stream
 ffmpeg -stream_loop -1 -re -i ~/Downloads/test-video.mp4 -c copy -f flv "rtmp://localhost:1935/stream/test2"

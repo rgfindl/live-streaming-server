@@ -1,5 +1,6 @@
 global
  pidfile /var/run/haproxy.pid
+ maxconn <%= servers.length %>
 
 defaults
  log global
@@ -10,7 +11,7 @@ defaults
 frontend ft_rtpm
  bind *:1935 name rtmp
  mode tcp
- maxconn 600
+ maxconn <%= servers.length %>
  default_backend bk_rtmp
 
 frontend ft_http
@@ -27,5 +28,5 @@ backend bk_rtmp
  mode tcp
  balance roundrobin
  <% servers.forEach(function(server, index) { %>
- server media<%= index %> <%= server %> check maxconn 200 weight 10
+ server media<%= index %> <%= server %> check maxconn 1 weight 10
  <% }); %>

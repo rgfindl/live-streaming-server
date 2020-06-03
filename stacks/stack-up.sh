@@ -25,7 +25,7 @@ case $1 in
         --stack-name video-streaming-proxy-dns \
         --capabilities CAPABILITY_IAM \
         --parameter-overrides \
-        Proxy1=50.19.45.124 \
+        Proxy1=$(aws ec2 describe-network-interfaces --network-interface-ids $(aws ecs describe-tasks --cluster video-streaming --tasks $(aws ecs list-tasks --cluster video-streaming --service-name video-streaming-proxy --query "taskArns" --output text) --query "tasks[0].attachments[0].details[?name=='networkInterfaceId'].value" --output text) --query "NetworkInterfaces[0].Association.PublicIp" --output text) \
         ${PROFILE}
         ;;
     ecs)

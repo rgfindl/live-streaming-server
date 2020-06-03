@@ -38,6 +38,6 @@ docker push 132093761664.dkr.ecr.us-east-1.amazonaws.com/video-streaming-server:
 ```
 docker build \
 -t video-streaming-server .
-docker tag video-streaming-server 132093761664.dkr.ecr.us-east-1.amazonaws.com/video-streaming-server:1.0.10
-docker push 132093761664.dkr.ecr.us-east-1.amazonaws.com/video-streaming-server:1.0.10
+docker tag video-streaming-server 132093761664.dkr.ecr.us-east-1.amazonaws.com/video-streaming-server:1.0.15
+docker push 132093761664.dkr.ecr.us-east-1.amazonaws.com/video-streaming-server:1.0.15
 ```

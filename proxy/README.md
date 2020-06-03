@@ -34,6 +34,12 @@ docker push 132093761664.dkr.ecr.us-east-1.amazonaws.com/video-streaming-proxy:1
 ```
 docker build \
 -t video-streaming-proxy .
-docker tag video-streaming-proxy 132093761664.dkr.ecr.us-east-1.amazonaws.com/video-streaming-proxy:1.0.8
-docker push 132093761664.dkr.ecr.us-east-1.amazonaws.com/video-streaming-proxy:1.0.8
+docker tag video-streaming-proxy 132093761664.dkr.ecr.us-east-1.amazonaws.com/video-streaming-proxy:1.0.9
+docker push 132093761664.dkr.ecr.us-east-1.amazonaws.com/video-streaming-proxy:1.0.9
 ```
+
+
+### Get IP
+aws ec2 describe-network-interfaces --network-interface-ids $(aws ecs describe-tasks --cluster video-streaming --tasks $(aws ecs list-tasks --cluster video-streaming --service-name video-streaming-proxy --query "taskArns" --output text) --query "tasks[0].attachments[0].details[?name=='networkInterfaceId'].value" --output text) --query "NetworkInterfaces[0].Association.PublicIp" --output text
+
+aws ec2 describe-network-interfaces --network-interface-ids

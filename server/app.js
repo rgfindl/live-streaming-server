@@ -1,6 +1,7 @@
 const NodeMediaServer = require('node-media-server');
 const _ = require('lodash');
 const { join } = require('path');
+const querystring = require('querystring');
 const fs = require('./lib/fs');
 const hls = require('./lib/hls');
 const abr = require('./lib/abr');
@@ -30,7 +31,7 @@ const init = async () => {
         ping_timeout: 60
       },
       http: {
-        port: 8000,
+        port: 8080,
         mediaroot: process.env.MEDIA_ROOT || 'media',
         allow_origin: '*',
         api: true
@@ -241,28 +242,46 @@ const init = async () => {
         this.streams.set(name, id);
       } else if (StreamPath.indexOf('/stream/') != -1) {
         // Relay to youtube, facebook, twitch ???
-        let session;
         if (args.youtube) {
-          session = nms.nodeRelaySession({
+          const params = utils.getParams(args, 'youtube_');
+          const query = _.isEmpty(params) ? '' : `?${querystring.stringify(params)}`;
+          const url = `rtmp://a.rtmp.youtube.com/live2/${args.youtube}${query}`;
+          const session = nms.nodeRelaySession({
             ffmpeg: config.relay.ffmpeg,
             inPath: `rtmp://127.0.0.1:${config.rtmp.port}${StreamPath}`,
-            ouPath: `rtmp://a.rtmp.youtube.com/live2/${decodeURI(args.youtube)}`
+            ouPath: url
           });
           session.id = `youtube-${id}`;
+          session.on('end', (id) => {
+            this.dynamicSessions.delete(id);
+          });
+          this.dynamicSessions.set(session.id, session);
+          session.run();
         }
         if (args.facebook) {
+          const params = utils.getParams(args, 'facebook_');
+          const query = _.isEmpty(params) ? '' : `?${querystring.stringify(params)}`;
+          const url = `rtmps://live-api-s.facebook.com:443/rtmp/${args.facebook}${query}`;
           session = nms.nodeRelaySession({
             ffmpeg: config.relay.ffmpeg,
             inPath: `rtmp://127.0.0.1:${config.rtmp.port}${StreamPath}`,
-            ouPath: `rtmps://live-api-s.facebook.com:443/rtmp/${decodeURI(args.facebook)}`
+            ouPath: url
           });
           session.id = `facebook-${id}`;
+          session.on('end', (id) => {
+            this.dynamicSessions.delete(id);
+          });
+          this.dynamicSessions.set(session.id, session);
+          session.run();
         }
         if (args.twitch) {
+          const params = utils.getParams(args, 'twitch_');
+          const query = _.isEmpty(params) ? '' : `?${querystring.stringify(params)}`;
+          const url = `rtmp://live-jfk.twitch.tv/app/${args.twitch}${query}`;
           session = nms.nodeRelaySession({
             ffmpeg: config.relay.ffmpeg,
             inPath: `rtmp://127.0.0.1:${config.rtmp.port}${StreamPath}`,
-            ouPath: `rtmp://live-jfk.twitch.tv/app/${decodeURI(args.twitch)}`,
+            ouPath: url,
             raw: [
               '-c:v',
               'libx264',
@@ -287,8 +306,6 @@ const init = async () => {
             ]
           });
           session.id = `twitch-${id}`;
-        }
-        if (session) {
           session.on('end', (id) => {
             this.dynamicSessions.delete(id);
           });

@@ -22,7 +22,7 @@ http {
 
   gzip on;
 
-  proxy_cache_path /tmp/cache/ levels=1:2 keys_zone=CONTENTCACHE:10m max_size=15g inactive=240m use_temp_path=off;
+  proxy_cache_path /tmp/cache/ levels=1:2 keys_zone=CONTENTCACHE:10m max_size=15g inactive=10m use_temp_path=off;
 
   ignore_invalid_headers off;
 
@@ -49,9 +49,6 @@ http {
     <% }); %>
 
     location ~ ^/(.*live\.m3u8)$ {
-      proxy_pass http://node-backend/$1$is_args$args;
-      add_header Cache-Control "max-age=60";
-
       #
       # Cache results on local disc
       #
@@ -65,12 +62,14 @@ http {
       # CORS
       #
       include /etc/nginx/nginx.cors.conf;
+
+      #
+      # Proxy Pass
+      #
+      proxy_pass http://node-backend/$1$is_args$args;
     }
 
     location ~ ^/(.*index\.m3u8)$ {
-      proxy_pass http://node-backend/$1$is_args$args;
-      add_header Cache-Control "no-cache";
-
       #
       # Cache results on local disc
       #
@@ -84,12 +83,14 @@ http {
       # CORS
       #
       include /etc/nginx/nginx.cors.conf;
+
+      #
+      # Proxy Pass
+      #
+      proxy_pass http://node-backend/$1$is_args$args;
     }
 
     location ~ ^/(.*\.ts)$ {
-      proxy_pass http://node-backend/$1$is_args$args;
-      add_header Cache-Control "max-age=600";
-
       #
       # Cache results on local disc
       #
@@ -103,6 +104,11 @@ http {
       # CORS
       #
       include /etc/nginx/nginx.cors.conf;
+
+      #
+      # Proxy Pass
+      #
+      proxy_pass http://node-backend/$1$is_args$args;
     }
 
     location /healthcheck {
