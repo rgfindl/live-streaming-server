@@ -1,12 +1,17 @@
 {
   "name": "live-streaming-origin",
-  "version": "1.0.0",
+  "version": "1.0.11",
   "description": "",
   "private": true,
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
     "generate-config": "node index.js",
-    "start": "node server/server.js"
+    "start": "node server/server.js",
+    "get-login": "aws ecr get-login --registry-ids 132093761664 --no-include-email --profile bluefin",
+    "build": "docker build -t video-streaming-origin .",
+    "tag": "docker tag video-streaming-origin 132093761664.dkr.ecr.us-east-1.amazonaws.com/video-streaming-origin:$npm_package_version",
+    "push": "docker push 132093761664.dkr.ecr.us-east-1.amazonaws.com/video-streaming-origin:$npm_package_version",
+    "deploy": "yarn run build && yarn run tag && yarn run push"
   },
   "author": "",
   "license": "ISC",

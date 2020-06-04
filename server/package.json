@@ -1,11 +1,16 @@
 {
   "name": "live-streaming-server",
-  "version": "1.0.0",
+  "version": "1.0.15",
   "description": "Ingest RTMP - Transcode into HLS - Relay to Social Media - Live Streaming",
   "main": "app.js",
   "scripts": {
     "test": "NODE_ENV=development node app.js",
-    "start": "node app.js"
+    "start": "node app.js",
+    "get-login": "aws ecr get-login --registry-ids 132093761664 --no-include-email --profile bluefin",
+    "build": "docker build -t video-streaming-server .",
+    "tag": "docker tag video-streaming-origin 132093761664.dkr.ecr.us-east-1.amazonaws.com/video-streaming-server:$npm_package_version",
+    "push": "docker push 132093761664.dkr.ecr.us-east-1.amazonaws.com/video-streaming-server:$npm_package_version",
+    "deploy": "yarn run build && yarn run tag && yarn run push"
   },
   "repository": {
     "type": "git",
