@@ -206,7 +206,10 @@ const init = async () => {
     // HLS callbacks
     //
     hls.on('newHlsStream', async (name) => {
+      // Create the ABR HLS playlist file.
       await abr.createPlaylist(config.http.mediaroot, name);
+      // Send the "stream key" <-> "IP:PORT" mapping to Redis
+      // This tells the Origin which Server has the HLS files
       await cache.set(name, SERVER_ADDRESS);
     });
 
@@ -238,10 +241,14 @@ const init = async () => {
     nms.on('postPublish', async (id, StreamPath, args) => {
       logger.log('[NodeEvent on postPublish]', `id=${id} StreamPath=${StreamPath} args=${JSON.stringify(args)}`);
       if (StreamPath.indexOf('/hls/') != -1) {
+        // Set the "stream key" <-> "id" mapping for this RTMP/HLS session
+        // We use this when creating the DVR HLS playlist name on S3.
         const name = StreamPath.split('/').pop();
         this.streams.set(name, id);
       } else if (StreamPath.indexOf('/stream/') != -1) {
-        // Relay to youtube, facebook, twitch ???
+        //
+        // Start Relay to youtube, facebook, and/or twitch
+        //
         if (args.youtube) {
           const params = utils.getParams(args, 'youtube_');
           const query = _.isEmpty(params) ? '' : `?${querystring.stringify(params)}`;
@@ -319,20 +326,30 @@ const init = async () => {
       logger.log('[NodeEvent on donePublish]', `id=${id} StreamPath=${StreamPath} args=${JSON.stringify(args)}`);
       if (StreamPath.indexOf('/hls/') != -1) {
         const name = StreamPath.split('/').pop();
+        // Delete the Redis cache key for this stream
         await cache.del(name);
+        // Wait a few minutes before deleting the HLS files on this Server
+        // for this session
         const timeoutMs = _.isEqual(process.env.NODE_ENV, 'development') ?
           1000 : 
           2 * 60 * 1000;
         await utils.timeout(timeoutMs);
-        try {
-          // Cleanup directory
-          logger.log('[Delete HLS Directory]', `dir=${join(config.http.mediaroot, name)}`);
-          this.streams.delete(name);
-          fs.rmdirSync(join(config.http.mediaroot, name));
-        } catch (err) {
-          logger.error(err);
+        if (!_.isEqual(await cache.get(name), SERVER_ADDRESS)) {
+          // Only clean up if the stream isn't running.  
+          // The user could have terminated then started again.
+          try {
+            // Cleanup directory
+            logger.log('[Delete HLS Directory]', `dir=${join(config.http.mediaroot, name)}`);
+            this.streams.delete(name);
+            fs.rmdirSync(join(config.http.mediaroot, name));
+          } catch (err) {
+            logger.error(err);
+          }
         }
       } else if (StreamPath.indexOf('/stream/') != -1) {
+        //
+        // Stop the Relay's
+        //
         if (args.youtube) {
           let session = this.dynamicSessions.get(`youtube-${id}`);
           if (session) {

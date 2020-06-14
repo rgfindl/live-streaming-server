@@ -8,8 +8,10 @@ cache.on('error', (err) => {
 });
 const set = promisify(cache.set).bind(cache);
 const del = promisify(cache.del).bind(cache);
+const get = promisify(cache.get).bind(cache);
 
 module.exports = {
   set,
-  del
+  del,
+  get
 };
