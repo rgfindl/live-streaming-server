@@ -32,7 +32,7 @@
     "axios": "^0.19.2",
     "chalk": "^4.0.0",
     "chokidar": "^3.4.0",
-    "lodash": "^4.17.15",
+    "lodash": "^4.17.19",
     "node-media-server": "https://github.com/rgfindl/Node-Media-Server",
     "redis": "^3.0.2"
   },
