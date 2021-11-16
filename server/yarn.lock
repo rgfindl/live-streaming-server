@@ -48,12 +48,12 @@ async-limiter@~1.0.0:
   resolved "https://registry.yarnpkg.com/async-limiter/-/async-limiter-1.0.1.tgz#dd379e94f0db8310b08291f9d64c3209766617fd"
   integrity sha512-csOlWGAcRFJaI6m+F2WKdnMKr4HhdhFVBk0H/QbJFMCr+uO2kwohwXQPxw/9OCxp05r5ghVBFSyioixx3gfkNQ==
 
-aws-sdk@^2.672.0:
-  version "2.672.0"
-  resolved "https://registry.yarnpkg.com/aws-sdk/-/aws-sdk-2.672.0.tgz#1aa321f40be878efec225f83184a15be6ab753a4"
-  integrity sha512-ANxBUPTx5KvNX4OJhIkGT6IoNhBPuh63YvAGuf6tV55MsXNNpZXWuPtvIHxst+M5GrQFA2qDpfcuENzC3OzumQ==
+aws-sdk@^2.814.0:
+  version "2.814.0"
+  resolved "https://registry.yarnpkg.com/aws-sdk/-/aws-sdk-2.814.0.tgz#7a1c36006e0b5826f14bd2511b1d229ef6814bb0"
+  integrity sha512-empd1m/J/MAkL6d9OeRpmg9thobULu0wk4v8W3JToaxGi2TD7PIdvE6yliZKyOVAdJINhBWEBhxR4OUIHhcGbQ==
   dependencies:
-    buffer "4.9.1"
+    buffer "4.9.2"
     events "1.1.1"
     ieee754 "1.1.13"
     jmespath "0.15.0"
@@ -108,10 +108,10 @@ braces@~3.0.2:
   dependencies:
     fill-range "^7.0.1"
 
-buffer@4.9.1:
-  version "4.9.1"
-  resolved "https://registry.yarnpkg.com/buffer/-/buffer-4.9.1.tgz#6d1bb601b07a4efced97094132093027c95bc298"
-  integrity sha1-bRu2AbB6TvztlwlBMgkwJ8lbwpg=
+buffer@4.9.2:
+  version "4.9.2"
+  resolved "https://registry.yarnpkg.com/buffer/-/buffer-4.9.2.tgz#230ead344002988644841ab0244af8c44bbe3ef8"
+  integrity sha512-xq+q3SRMOxGivLhBNaUdC64hDTQwejJ+H0T/NB1XMtTVEwNTrfFF3gAxiyW0Bu/xWEGhjVKgUcMhCrUy2+uCWg==
   dependencies:
     base64-js "^1.0.2"
     ieee754 "^1.1.4"
@@ -498,17 +498,6 @@ negotiator@0.6.2:
   version "0.6.2"
   resolved "https://registry.yarnpkg.com/negotiator/-/negotiator-0.6.2.tgz#feacf7ccf525a77ae9634436a64883ffeca346fb"
   integrity sha512-hZXc7K2e+PgeI1eDBe/10Ard4ekbfrrqG8Ep+8Jmf4JID2bNg7NvCPOZN+kfF574pFQI7mum2AUqDidoKqcTOw==
-
-node-media-server@../../Node-Media-Server:
-  version "2.1.8"
-  dependencies:
-    basic-auth-connect "^1.0.0"
-    chalk "^2.4.2"
-    dateformat "^3.0.3"
-    express "^4.16.4"
-    lodash ">=4.17.13"
-    mkdirp "1.0.3"
-    ws "^5.2.2"
 
 "node-media-server@https://github.com/rgfindl/Node-Media-Server":
   version "2.1.8"
